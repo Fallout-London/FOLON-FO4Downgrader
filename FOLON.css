@@ -1,0 +1,26 @@
+/*QWidget {
+    font: "Courier New";
+    background-color: #292831;
+    color: #fbbbad;
+}
+QWidget {
+    background-color: #292831;
+    color: #fbbbad;
+}
+QLineEdit {
+    padding: 5px;
+    border: 2px solid #fbbbad;
+    border-radius: 10px;
+}
+QLineEdit::placeholder {
+    color: grey;
+}
+
+QPushButton {
+    padding: 5px;
+    border: 2px solid #fbbbad;
+    border-radius: 10px;
+}
+QPushButton::Hover {
+    background-color: grey;
+}

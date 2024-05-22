@@ -1,0 +1,6 @@
+/.venv
+/Settings.json
+/build
+/dist
+/SteamFiles
+.fuse_hidden*
