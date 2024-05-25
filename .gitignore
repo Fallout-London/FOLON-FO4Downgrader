@@ -1,6 +1,7 @@
-/.venv
 /Settings.json
 /build
 /dist
 /SteamFiles
+/__pycache__
+/.*
 .fuse_hidden*

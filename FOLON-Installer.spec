@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ["FOLON-Installer.py"],
+    ["FOLON-Downgrader.py"],
     pathex=[],
     binaries=[],
     datas=[("FOLON.css", "."), ("img/", "img/")],
@@ -21,7 +21,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="FOLON-Installer",
+    name="FOLON-Downgrader",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -32,7 +32,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    contents_directory=".FOLON-Installer-Files",
+    contents_directory=".FOLON-Downgrader-Files",
 )
 coll = COLLECT(
     exe,
@@ -41,5 +41,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name="FOLON-Installer",
+    name="FOLON-Downgrader",
 )

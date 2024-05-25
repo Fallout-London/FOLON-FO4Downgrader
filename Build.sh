@@ -8,3 +8,6 @@ python -m pip install -U black
 python -m black FOLON-Installer.py
 
 python -m PyInstaller --clean -y "FOLON-Installer.spec"
+
+cd dist/FOLON-Installer/
+./FOLON-Installer
