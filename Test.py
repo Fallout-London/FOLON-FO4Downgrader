@@ -1,71 +1,146 @@
+from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
+from PyQt6.QtCore import *
+
+import time
+import traceback, sys
 
 
-class MainWindow(QWidget):
+class WorkerSignals(QObject):
+    '''
+    Defines the signals available from a running worker thread.
+
+    Supported signals are:
+
+    finished
+        No data
+
+    error
+        tuple (exctype, value, traceback.format_exc() )
+
+    result
+        object data returned from processing, anything
+
+    progress
+        int indicating % progress
+
+    '''
+    finished = pyqtSignal()
+    error = pyqtSignal(tuple)
+    result = pyqtSignal(object)
+    progress = pyqtSignal(int)
+
+
+class Worker(QRunnable):
+    '''
+    Worker thread
+
+    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
+
+    :param callback: The function callback to run on this worker thread. Supplied args and
+                     kwargs will be passed through to the runner.
+    :type callback: function
+    :param args: Arguments to pass to the callback function
+    :param kwargs: Keywords to pass to the callback function
+
+    '''
+
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker, self).__init__()
+
+        # Store constructor arguments (re-used for processing)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+
+        # Add the callback to our kwargs
+        self.kwargs['progress_callback'] = self.signals.progress
+
+    @pyqtSlot()
+    def run(self):
+        '''
+        Initialise the runner function with passed args, kwargs.
+        '''
+
+        # Retrieve args/kwargs here; and fire processing using them
+        try:
+            result = self.fn(*self.args, **self.kwargs)
+        except:
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))
+        else:
+            self.signals.result.emit(result)  # Return the result of the processing
+        finally:
+            self.signals.finished.emit()  # Done
+
+
+
+class MainWindow(QMainWindow):
+
+
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.resize(700, 410)
-        self.setWindowTitle("Youtube_mp3_Converter")
+        super(MainWindow, self).__init__(*args, **kwargs)
 
-        # Widgets
+        self.counter = 0
 
-        # Top Label
-        top_label = QLabel()
-        top_label.setText("Youtube mp3 \nConverter")  # +
+        layout = QVBoxLayout()
 
-        """ 
-        speicherort_label = QLabel()                       
-        speicherort_label.setText("welcher Speicherort")
-        test_label = QLabel()
-        test_label.setText("test")
-        """
+        self.l = QLabel("Start")
+        b = QPushButton("DANGER!")
+        b.pressed.connect(self.oh_no)
 
-        self.widget = QWidget()  # +
-        layout_h = QHBoxLayout(self.widget)  # +
+        layout.addWidget(self.l)
+        layout.addWidget(b)
 
-        # line edit
-        self.speicherort_input = QLineEdit()
-        # push buttons
-        self.speicherort_button = QPushButton("Speicherort_bestaetigen")
+        w = QWidget()
+        w.setLayout(layout)
 
-        layout_h.addWidget(self.speicherort_input)  # +
-        layout_h.addWidget(self.speicherort_button)  # +
+        self.setCentralWidget(w)
 
-        # layout
-        layout = QFormLayout()
-        self.setLayout(layout)
-        layout.addRow(top_label, self.widget)  # +
-        #        layout.addRow(self.speicherort_input, self.speicherort_button )
+        self.show()
 
-        RateDialog = QDialog(self)
-        RateDialogLayout = QFormLayout()
-        RateDialogLayout.addRow(QLabel("<h1>You are being rate limited</h1>"))
-        RateDialogLayout.addRow(
-            QLabel("<p>This is most likely because of an error in the installer</p>")
-        )
-        LinkLabel = QLabel(
-            "<a href='https://discord.gg/GtmKaR8'>Please report it to the Discord server</a>"
-        )
-        LinkLabel.setOpenExternalLinks(True)
-        RateDialogLayout.addRow(LinkLabel)
-        RateDialogLayout.addRow(QLabel("And ping @Coffandro for help"))
+        self.threadpool = QThreadPool()
+        print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-        RateDialogButton = QPushButton(text="Close")
-        RateDialogButton.pressed.connect(self.CloseRateDialog)
-        RateDialogLayout.addRow(RateDialogButton)
+        self.timer = QTimer()
+        self.timer.setInterval(1000)
+        self.timer.timeout.connect(self.recurring_timer)
+        self.timer.start()
 
-        RateDialog.setLayout(RateDialogLayout)
-        RateDialog.exec()
+    def progress_fn(self, n):
+        print("%d%% done" % n)
 
-    def CloseRateDialog(self):
-        sys.exit()
+    def execute_this_fn(self, progress_callback):
+        for n in range(0, 5):
+            time.sleep(1)
+            progress_callback.emit(n*100/4)
+
+        return "Done."
+
+    def print_output(self, s):
+        print(s)
+
+    def thread_complete(self):
+        print("THREAD COMPLETE!")
+
+    def oh_no(self):
+        # Pass the function to execute
+        worker = Worker(self.execute_this_fn) # Any other args, kwargs are passed to the run function
+        worker.signals.result.connect(self.print_output)
+        worker.signals.finished.connect(self.thread_complete)
+        worker.signals.progress.connect(self.progress_fn)
+
+        # Execute
+        self.threadpool.start(worker)
 
 
-if __name__ == "__main__":
-    import sys
+    def recurring_timer(self):
+        self.counter +=1
+        self.l.setText("Counter: %d" % self.counter)
 
-    app = QApplication(sys.argv)
-    app.setStyle("fusion")
-    w = MainWindow()
-    w.show()
-    sys.exit(app.exec())
+
+app = QApplication([])
+window = MainWindow()
+app.exec()

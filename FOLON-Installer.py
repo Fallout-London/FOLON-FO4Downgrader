@@ -2,50 +2,9 @@ import sys
 import subprocess
 import shutil
 import os
+import Utility as Util
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QIcon
-
-
-def IsBundled():
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return True
-    else:
-        return False
-
-
-def IsWindows():
-    if hasattr(sys, "getwindowsversion"):
-        return True
-    else:
-        return False
-
-
-def Write_Settings(settings):
-    import json
-
-    if not os.path.isdir(".FOLON-Installer-Files"):
-        os.mkdir(".FOLON-Installer-Files")
-    with open(".FOLON-Installer-Files/Settings.json", "w") as f:
-        json.dump(settings, f)
-
-
-def Read_Settings():
-    import json
-
-    # Read Settings
-    try:
-        f = open(".FOLON-Installer-Files/Settings.json")
-
-        # returns JSON object as
-        # a dictionary
-        settings = json.load(f)
-
-        # Closing file
-        f.close()
-    except:
-        settings = {"Username": ""}
-
-    return settings
 
 
 class MainWindow(QTabWidget):
@@ -66,15 +25,15 @@ class MainWindow(QTabWidget):
         self.tab3UI()
 
         self.setWindowTitle("Fallout: London Installer")
-        if IsBundled:
+        if Util.IsBundled:
             FOLONIcon = QIcon(".FOLON-Installer-Files/img/FOLON256.png")
         else:
             FOLONIcon = QIcon("img/FOLON256.png")
         self.setWindowIcon(FOLONIcon)
 
-    ######################################################################################
-    # STEAM LOGIN                                                                        #
-    ######################################################################################
+##########################################################################################
+# STEAM LOGIN                                                                            #
+##########################################################################################
 
     def tab1UI(self):
         layout = QFormLayout()
@@ -115,9 +74,9 @@ class MainWindow(QTabWidget):
         self.PasswordEntry.setFocus()
 
     def SteamSubmit(self):
-        Settings = Read_Settings()
+        Settings = Util.Read_Settings()
         Settings["Username"] = self.UsernameEntry.text()
-        Write_Settings(Settings)
+        Util.Write_Settings(Settings)
         self.LoginSteam(Settings["Username"], self.PasswordEntry.text())
 
     def ChangeHiddenPassword(self):
@@ -130,7 +89,10 @@ class MainWindow(QTabWidget):
         import zipfile
         import pathlib
 
-        if IsWindows():
+        if not os.path.isdir(".FOLON-Installer-Files"):
+            os.mkdir(".FOLON-Installer-Files")
+
+        if Util.IsWindows:
             os.system(
                 'curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip" -o .FOLON-Installer-Files/steamcmd.zip'
             )
@@ -152,7 +114,7 @@ class MainWindow(QTabWidget):
         if not os.path.isdir(".FOLON-Installer-Files/SteamFiles/"):
             self.SetupSteam()
 
-        if IsWindows():
+        if Util.IsWindows:
             if os.path.isfile(".FOLON-Installer-Files/SteamFiles/steamcmd.exe"):
                 p = subprocess.Popen(
                     [
@@ -233,9 +195,9 @@ class MainWindow(QTabWidget):
             SteamPDlg.exec()
 
     def GuardSteam(self):
-        Settings = Read_Settings()
+        Settings = Util.Read_Settings()
 
-        if IsWindows():
+        if Util.IsWindows:
             p = subprocess.Popen(
                 f'.FOLON-Installer-Files/SteamFiles/steamcmd.exe +login "{Settings["Username"]}" "{self.PasswordEntry.text()}" +quit',
                 stdin=subprocess.PIPE,
@@ -250,11 +212,11 @@ class MainWindow(QTabWidget):
         p.communicate(b"quit")
 
     def GuardSubmit(self):
-        Settings = Read_Settings()
+        Settings = Util.Read_Settings()
         print(self.GuardEntry.text())
         import subprocess
 
-        if IsWindows():
+        if Util.IsWindows:
             p = subprocess.Popen(
                 [
                     ".FOLON-Installer-Files/SteamFiles/steamcmd.exe",
@@ -326,9 +288,9 @@ class MainWindow(QTabWidget):
     def CloseRateDialog(self):
         sys.exit()
 
-    ######################################################################################
-    # Installation                                                                       #
-    ######################################################################################
+##########################################################################################
+# Installation                                                                           #
+##########################################################################################
 
     def tab2UI(self):
         self.Depots = [
@@ -417,8 +379,8 @@ class MainWindow(QTabWidget):
         # self.setTabEnabled(1, False)
 
     def Install(self, index):
-        Settings = Read_Settings()
-        if IsWindows():
+        Settings = Util.Read_Settings()
+        if Util.IsWindows:
             subprocess.Popen(
                 [
                     ".FOLON-Installer-Files/SteamFiles/steamcmd.exe",
@@ -461,13 +423,13 @@ class MainWindow(QTabWidget):
     def CopyFiles(self):
         for i in self.Depots:
             try:
-                if IsWindows():
+                if Util.IsWindows:
                     SteamFiles = (
                         ".FOLON-Installer-Files/SteamFiles/steamapps/content/app_377160"
                     )
                 else:
                     SteamFiles = ".FOLON-Installer-Files/SteamFiles/linux32/steamapps/content/app_377160"
-                if IsBundled():
+                if Util.IsBundled():
                     Destination = "."
                 else:
                     Destination = "../Fallout 4"
@@ -496,7 +458,7 @@ class MainWindow(QTabWidget):
 
 def main():
     app = QApplication(sys.argv)
-    if IsBundled():
+    if Util.IsBundled():
         sshFile = ".FOLON-Installer-Files/FOLON.css"
     else:
         sshFile = "FOLON.css"
