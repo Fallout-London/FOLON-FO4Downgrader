@@ -6,7 +6,6 @@ import Utility as Util
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon
-from inspect import isfunction
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
 
@@ -61,8 +60,6 @@ class MainWindow(QTabWidget):
         self.__loadingTranslucentScreen = LoadingTranslucentScreen(parent=self,
                                                                    description_text=text)
         self.__loadingTranslucentScreen.setDescriptionLabelDirection('Right')
-        #self.__thread = LoadingThread(loading_screen=self.__loadingTranslucentScreen)
-        # for second result
         self.__thread = ScreenThread(Function, PostFunction=PostFunction, loading_screen=self.__loadingTranslucentScreen)
         self.__thread.start()
 
@@ -373,81 +370,39 @@ class MainWindow(QTabWidget):
             [490650, 4873048792354485093],
             [393895, 7677765994120765493],
         ]
+        if Util.IsWindows():
+            self.SteamFiles = ".FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"
+        else:
+            self.SteamFiles = ".FOLON-Downgrader-Files/SteamFiles/linux32/steamapps/content/app_377160"
+        self.index = 0
         layout = QFormLayout()
 
         SteamLabel = QLabel(text=str(Util.WhereSteam()))
         layout.addRow(SteamLabel)
 
-        CopyButton = QPushButton(text="Copy Depots to local folder")
-        CopyButton.pressed.connect(self.CopyFiles)
-        layout.addRow(CopyButton)
-
-        """
-        InstallButton1 = QPushButton(text="Install Depot 1")
-        InstallButton1.pressed.connect(lambda: self.Install(0))
-        layout.addRow(InstallButton1)
-
-        InstallButton2 = QPushButton(text="Install Depot 2")
-        InstallButton2.pressed.connect(lambda: self.Install(1))
-        layout.addRow(InstallButton2)
-
-        InstallButton3 = QPushButton(text="Install Depot 3")
-        InstallButton3.pressed.connect(lambda: self.Install(2))
-        layout.addRow(InstallButton3)
-
-        InstallButton4 = QPushButton(text="Install Depot 4")
-        InstallButton4.pressed.connect(lambda: self.Install(3))
-        layout.addRow(InstallButton4)
-
-        InstallButton5 = QPushButton(text="Install Depot 5")
-        InstallButton5.pressed.connect(lambda: self.Install(4))
-        layout.addRow(InstallButton5)
-
-        InstallButton6 = QPushButton(text="Install Depot 6")
-        InstallButton6.pressed.connect(lambda: self.Install(5))
-        layout.addRow(InstallButton6)
-
-        InstallButton7 = QPushButton(text="Install Depot 7")
-        InstallButton7.pressed.connect(lambda: self.Install(6))
-        layout.addRow(InstallButton7)
-
-        InstallButton8 = QPushButton(text="Install Depot 8")
-        InstallButton8.pressed.connect(lambda: self.Install(7))
-        layout.addRow(InstallButton8)
-
-        InstallButton9 = QPushButton(text="Install Depot 9")
-        InstallButton9.pressed.connect(lambda: self.Install(8))
-        layout.addRow(InstallButton9)
-
-        InstallButton10 = QPushButton(text="Install Depot 10")
-        InstallButton10.pressed.connect(lambda: self.Install(9))
-        layout.addRow(InstallButton10)
-
-        InstallButton11 = QPushButton(text="Install Depot 11")
-        InstallButton11.pressed.connect(lambda: self.Install(10))
-        layout.addRow(InstallButton11)
-
-        InstallButton12 = QPushButton(text="Install Depot 12")
-        InstallButton12.pressed.connect(lambda: self.Install(11))
-        layout.addRow(InstallButton12)
-
-        InstallButton13 = QPushButton(text="Install Depot 13")
-        InstallButton13.pressed.connect(lambda: self.Install(12))
-        layout.addRow(InstallButton13)
-
-        InstallButton14 = QPushButton(text="Install Depot 14")
-        InstallButton14.pressed.connect(lambda: self.Install(13))
-        layout.addRow(InstallButton14)
-        """
+        InstallButton = QPushButton(text="Downgrade Fallout 4 (This will take a long time)")
+        InstallButton.pressed.connect(self.InstallInit)
+        layout.addRow(InstallButton)
 
         self.setTabText(1, "Installation")
         self.tab2.setLayout(layout)
         # self.setTabEnabled(1, False)
 
+    def InstallInit(self):
+        print(os.path.isdir(f"{self.SteamFiles}/depot_{self.Depots[self.index][0]}"))
+        #if os.path.isdir(f"{self.SteamFiles}/depot_{self.Depots[self.index][0]}") and self.index < 14:
+        if self.index < 13:
+            if not os.path.isdir(
+                    f"{self.SteamFiles}/depot_{self.Depots[self.index][0]}"
+                ):
+                self.Loading(lambda:self.Install(self.index), text=f"Downloading depot[{self.index+1}/14]", PostFunction=self.InstallInit)
+            else:
+                self.Loading(lambda:self.CopyFiles(self.index), text=f"Moving depot[{self.index+1}/14]", PostFunction=self.InstallInit)
+
     def Install(self, index):
         Settings = Util.Read_Settings()
         if Util.IsWindows():
-            subprocess.Popen(
+            subprocess.run(
                 [
                     ".FOLON-Downgrader-Files/SteamFiles/steamcmd.exe",
                     "+login",
@@ -461,7 +416,7 @@ class MainWindow(QTabWidget):
                 ]
             )
         else:
-            subprocess.Popen(
+            subprocess.run(
                 [
                     ".FOLON-Downgrader-Files/SteamFiles/steamcmd.sh",
                     "+login",
@@ -475,34 +430,34 @@ class MainWindow(QTabWidget):
                 ]
             )
 
-    def CopyFiles(self, Depot):
+    def CopyFiles(self, index):
         try:
-            if Util.IsWindows():
-                SteamFiles = ".FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"
-            else:
-                SteamFiles = ".FOLON-Downgrader-Files/SteamFiles/linux32/steamapps/content/app_377160"
             if Util.IsBundled():
                 Destination = "."
             else:
                 Destination = "../Fallout 4"
+            if not os.path.isdir(Destination):
+                mkdir(Destination)
+            Depot = self.Depots[index][0]
 
             print("Started Depot:", Depot)
-            for a in os.listdir(f"{SteamFiles}/depot_{Depot}"):
-                if os.path.isdir(f"{SteamFiles}/depot_{Depot}/{a}"):
-                    for b in os.listdir(f"{SteamFiles}/depot_{Depot}/{a}"):
+            for a in os.listdir(f"{self.SteamFiles}/depot_{Depot}"):
+                if os.path.isdir(f"{self.SteamFiles}/depot_{Depot}/{a}"):
+                    for b in os.listdir(f"{self.SteamFiles}/depot_{Depot}/{a}"):
                         if not os.path.isdir(f"{Destination}/{a}"):
                             os.mkdir(f"{Destination}/{a}")
                         shutil.move(
-                            f"{SteamFiles}/depot_{Depot}/{a}/{b}",
+                            f"{self.SteamFiles}/depot_{Depot}/{a}/{b}",
                             f"{Destination}/{a}/{b}",
                         )
                 else:
                     shutil.move(
-                        f"{SteamFiles}/depot_{Depot}/{a}", f"{Destination}/{a}"
+                        f"{self.SteamFiles}/depot_{Depot}/{a}", f"{Destination}/{a}"
                     )
                 print("moved:", a)
-            shutil.rmtree(f"{SteamFiles}/depot_{Depot}")
+            shutil.rmtree(f"{self.SteamFiles}/depot_{Depot}")
             print("Finished Depot:", Depot)
+            self.index += 1
         except:
             print("Skipped Depot:", Depot)
 
@@ -513,16 +468,16 @@ def main():
         sshFile = ".FOLON-Downgrader-Files/FOLON.css"
     else:
         sshFile = "FOLON.css"
-        if os.path.isdir(".FOLON-Downgrader-Files"):
-            shutil.rmtree(".FOLON-Downgrader-Files")
-    with open(sshFile, "r") as fh:
-        app.setStyleSheet(fh.read())
+        #if os.path.isdir(".FOLON-Downgrader-Files"):
+        #    shutil.rmtree(".FOLON-Downgrader-Files")
     ex = MainWindow()
-    ex.setMinimumWidth(ex.width())
-    ex.setMinimumHeight(ex.height())
-    ex.setMaximumWidth(ex.width())
-    ex.setMaximumHeight(ex.height())
+    ex.setMinimumWidth(750)
+    ex.setMinimumHeight(575)
+    ex.setMaximumWidth(750)
+    ex.setMaximumHeight(575)
     ex.show()
+    
+    # Redirect stdout to a file
     sys.exit(app.exec())
 
 

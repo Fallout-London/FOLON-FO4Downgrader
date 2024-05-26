@@ -44,6 +44,18 @@ def IsWindows():
 	else:
 		return False
 
+def CountFiles(Directory):
+	import os
+	try:
+		Directory = str(Directory)
+		if os.path.isdir(Directory):
+			file_count = sum(len(files) for _, _, files in os.walk(Directory))
+			return file_count
+		else:
+			return False
+	except:
+		return False
+
 
 def Write_Settings(settings):
 	import json
@@ -84,5 +96,6 @@ def check_event(event, callback):
 
 if __name__ == "__main__":
 	print(WhereSteam())
+	print(CountFiles("."))
 	print(IsBundled())
 	print(IsWindows())
