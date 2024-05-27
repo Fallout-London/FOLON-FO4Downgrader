@@ -9,66 +9,98 @@ from PyQt5.QtGui import QIcon
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
 
-class Threader(QThread):
 
-    def __init__(self, Function):
-        super().__init__()
-        self._Function = Function
-
-    def run(self):
-        # Open the URL address.
-        _Function()
+class Communicate(QObject):
+    closeLoading = pyqtSignal()
 
 
 class ScreenThread(LoadingThread):
-    #Thanks to Yousef Azizi for his PyQtLoadingscreen script
+    # Thanks to Yousef Azizi for his PyQtLoadingscreen script
 
-    def __init__(self, Function, PostFunction = None, *args, **kwargs):
+    def __init__(
+        self,
+        Function,
+        PostFunction=None,
+        Window=None,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self._Function = Function
+        self._Window = Window
         if callable(PostFunction):
             self.finished.connect(lambda: PostFunction())
 
     def run(self):
-        self._Function()
+        Util.Loading = True
+        if self._Window != None:
+            Func = self._Function
+            self = self._Window
+            Func(self)
+        else:
+            self._Function()
 
-class MainWindow(QTabWidget):
-    def __init__(self, parent=None):
-        super(MainWindow, self).__init__(parent)
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("FOLON Fallout 4 downgrader")
+        FOLONIcon = QIcon(Util.resource_path("FOLON-Downgrader-Files/img/FOLON256.png"))
+        self.setWindowIcon(FOLONIcon)
+
+        pagelayout = QVBoxLayout()
+        button_layout = QHBoxLayout()
+        self.stacklayout = QStackedLayout()
+
+        pagelayout.addLayout(button_layout)
+        pagelayout.addLayout(self.stacklayout)
 
         self.tab1 = QWidget()
-        self.tab2 = QWidget()
-        self.tab1.setObjectName("Tab")
-        self.tab2.setObjectName("Tab")
-
-        self.addTab(self.tab1, "Tab 1")
-        self.addTab(self.tab2, "Tab 2")
+        self.stacklayout.addWidget(self.tab1)
         self.tab1UI()
+
+        self.tab2 = QWidget()
+        self.stacklayout.addWidget(self.tab2)
         self.tab2UI()
 
-        self.setWindowTitle("FOLON Fallout 4 downgrader")
-        if Util.IsBundled:
-            FOLONIcon = QIcon(".FOLON-Downgrader-Files/img/FOLON256.png")
-        else:
-            FOLONIcon = QIcon("img/FOLON256.png")
-        self.setWindowIcon(FOLONIcon)
-#########################################################################################
-# GENERAL GUI                                                                           #
-#########################################################################################
-    
-    def Loading(self, Function, text = "Loading..", PostFunction = None):
-        self.__loadingTranslucentScreen = LoadingTranslucentScreen(parent=self,
-                                                                   description_text=text)
-        self.__loadingTranslucentScreen.setDescriptionLabelDirection('Right')
-        self.__thread = ScreenThread(Function, PostFunction=PostFunction, loading_screen=self.__loadingTranslucentScreen)
+        self.InstallProgress = QProgressBar(self)
+        self.InstallProgress.setFormat("Login to Steam")
+        self.InstallProgress.setValue(10)
+        button_layout.addWidget(self.InstallProgress)
+
+        widget = QWidget()
+        widget.setLayout(pagelayout)
+        self.setCentralWidget(widget)
+
+    def activate_tab_2(self):
+        if self.FinishedLogging:
+            self.stacklayout.setCurrentIndex(1)
+            self.InstallProgress.setValue(20)
+
+    #########################################################################################
+    # GENERAL GUI                                                                           #
+    #########################################################################################
+
+    def Loading(self, Function, text="Loading..", PostFunction=None, Window=None):
+        self.__loadingTranslucentScreen = LoadingTranslucentScreen(
+            parent=self, description_text=text
+        )
+        self.__loadingTranslucentScreen.setDescriptionLabelDirection("Bottom")
+        self.__thread = ScreenThread(
+            Function,
+            PostFunction=PostFunction,
+            Window=Window,
+            loading_screen=self.__loadingTranslucentScreen,
+        )
         self.__thread.start()
 
-
-##########################################################################################
-# STEAM LOGIN                                                                            #
-##########################################################################################
+    ##########################################################################################
+    # STEAM LOGIN                                                                            #
+    ##########################################################################################
 
     def tab1UI(self):
+        self.FinishedLogging = False
+
         layout = QFormLayout()
 
         layout.addRow(
@@ -99,9 +131,7 @@ class MainWindow(QTabWidget):
         layout.addRow("Password hidden:", self.PasswordCheck)
         layout.addRow(LoginButton)
 
-        self.setTabText(0, "Steam login")
         self.tab1.setLayout(layout)
-        # self.setTabEnabled(0, False)
 
     # Steam Functions
 
@@ -122,46 +152,54 @@ class MainWindow(QTabWidget):
         self.LoginSteamInit()
 
     def LoginSteamInit(self):
-        if not os.path.isdir(".FOLON-Downgrader-Files/SteamFiles/"):
-            self.Loading(self.SetupSteam, text="Loading Steam backend", 
-                PostFunction=self.LoginSteamInit)
+        if not os.path.isdir("FOLON-Downgrader-Files/SteamFiles/"):
+            self.Loading(
+                self.SetupSteam,
+                text="Loading Steam backend",
+                PostFunction=self.LoginSteamInit,
+            )
         else:
-            self.Loading(self.LoginSteam, text="Logging into Steam")
+            self.Loading(
+                self.LoginSteam,
+                text="Logging into Steam",
+                PostFunction=self.activate_tab_2,
+            )
 
     def SetupSteam(self):
         import zipfile
         import pathlib
 
-        if not os.path.isdir(".FOLON-Downgrader-Files"):
-            os.mkdir(".FOLON-Downgrader-Files")
+        if not os.path.isdir("FOLON-Downgrader-Files"):
+            os.mkdir("FOLON-Downgrader-Files")
+        if os.path.isdir("FOLON-Downgrader-Files/SteamFiles"):
+            shutil.rmtree("FOLON-Downgrader-Files/SteamFiles")
+
+        pathlib.Path.mkdir("FOLON-Downgrader-Files/SteamFiles")
 
         if Util.IsWindows():
             os.system(
-                'curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip" -o .FOLON-Downgrader-Files/steamcmd.zip'
+                'curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip" -o FOLON-Downgrader-Files/steamcmd.zip'
             )
-            with zipfile.ZipFile(".FOLON-Downgrader-Files/steamcmd.zip", "r") as zip_ref:
-                zip_ref.extractall(".FOLON-Downgrader-Files/SteamFiles/")
+            with zipfile.ZipFile("FOLON-Downgrader-Files/steamcmd.zip", "r") as zip_ref:
+                zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
 
-            os.system(".FOLON-Downgrader-Files/SteamFiles/steamcmd.sh +quit")
+            os.system("FOLON-Downgrader-Files/SteamFiles/steamcmd.exe +quit")
         else:
-            if os.path.isdir(".FOLON-Downgrader-Files/SteamFiles"):
-                shutil.rmtree(".FOLON-Downgrader-Files/SteamFiles")
-
-            pathlib.Path.mkdir(".FOLON-Downgrader-Files/SteamFiles")
             os.system(
-                'curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf - -C .FOLON-Downgrader-Files/SteamFiles'
+                'curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf - -C FOLON-Downgrader-Files/SteamFiles'
             )
-            os.system(".FOLON-Downgrader-Files/SteamFiles/steamcmd.sh +quit")
+            os.system("FOLON-Downgrader-Files/SteamFiles/steamcmd.sh +quit")
 
     def LoginSteam(self):
         Settings = Util.Read_Settings()
         Username = Settings["Username"]
         Password = self.Password
+
         if Util.IsWindows():
-            if os.path.isfile(".FOLON-Downgrader-Files/SteamFiles/steamcmd.exe"):
+            if os.path.isfile("FOLON-Downgrader-Files/SteamFiles/steamcmd.exe"):
                 p = subprocess.Popen(
                     [
-                        ".FOLON-Downgrader-Files/SteamFiles/steamcmd.exe",
+                        "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe",
                         "+login",
                         f"{Username}",
                         f"{Password}",
@@ -171,10 +209,10 @@ class MainWindow(QTabWidget):
                     stdout=subprocess.PIPE,
                 )
         else:
-            if os.path.isfile(".FOLON-Downgrader-Files/SteamFiles/steamcmd.sh"):
+            if os.path.isfile("FOLON-Downgrader-Files/SteamFiles/steamcmd.sh"):
                 p = subprocess.Popen(
                     [
-                        ".FOLON-Downgrader-Files/SteamFiles/steamcmd.sh",
+                        "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh",
                         "+login",
                         f"{Username}",
                         f"{Password}",
@@ -188,71 +226,82 @@ class MainWindow(QTabWidget):
             b"You can also enter this code at any time using 'set_steam_guard_code'"
             in p.communicate()[0]
         ):
-
-            self.SteamGDlg = QDialog(self)
-            self.SteamGDlgLayout = QFormLayout()
-
-            self.SteamGDlgLayout.addRow(
-                QLabel("<h3>Please enter your Steam guard code.</h3>")
-            )
-            self.SteamGDlgLayout.addRow(
-                QLabel("<p>To authorize your identity Steam has sent a code</p>")
-            )
-            self.SteamGDlgLayout.addRow(
-                QLabel("<p>to either your mail or phone, please enter it here.</p>")
-            )
-
-            self.GuardEntry = QLineEdit()
-            GuardButton = QPushButton(text="Submit")
-            GuardButton.pressed.connect(self.GuardSubmit)
-
-            self.SteamGDlgLayout.addRow(
-                QLabel("<p>Steam guard code:</p>"), self.GuardEntry
-            )
-            self.SteamGDlgLayout.addRow(GuardButton)
-            self.SteamGDlg.setWindowTitle("Steam Guard Dialog")
-            self.SteamGDlg.setLayout(self.SteamGDlgLayout)
-            self.SteamGDlg.exec()
+            self.SteamDialog()
         elif (
             bytes(f"Logging in user '{Username}' to Steam Public...OK", "UTF-8")
             in p.communicate()[0]
         ):
-            try:
-                self.SteamGDlg.close()
-            except:
-                pass
+            self.LoginFinish()
+
         elif bytes("rate limit", "UTF-8") in p.communicate()[0]:
             self.OpenRateDialog()
 
         elif b"FAILED (Invalid Password)" in p.communicate()[0]:
-            try:
-                self.LoadingDialog.close()
-            except:
-                pass
-            SteamPDlg = QDialog(self)
-            SteamPDlgLayout = QFormLayout()
+            self.PasswordFail()
 
-            SteamPDlgLayout.addRow(QLabel("<h3>Incorrect Password.</h3>"))
-            SteamPDlgLayout.addRow(QLabel("<p>Please re-enter the password.</p>"))
-            SteamPDlgLayout.addRow(
-                QLabel("<p>Remember to <b>check</b> if it is correct.</p>")
-            )
-            SteamPDlg.setWindowTitle("Steam Password Dialog")
-            SteamPDlg.setLayout(SteamPDlgLayout)
-            SteamPDlg.exec()
+    def SteamDialog(self):
+        Util.Loading = False
+        self.SteamGDlg = QDialog()
+        self.SteamGDlgLayout = QFormLayout()
+
+        self.SteamGDlgLayout.addRow(
+            QLabel("<h3>Please enter your Steam guard code.</h3>")
+        )
+        self.SteamGDlgLayout.addRow(
+            QLabel("<p>To authorize your identity Steam has sent a code</p>")
+        )
+        self.SteamGDlgLayout.addRow(
+            QLabel("<p>to either your mail or phone, please enter it here.</p>")
+        )
+
+        self.GuardEntry = QLineEdit()
+        self.GuardButton = QPushButton(text="Submit")
+        self.GuardButton.pressed.connect(self.GuardSubmit)
+
+        self.SteamGDlgLayout.addRow(QLabel("<p>Steam guard code:</p>"), self.GuardEntry)
+        self.SteamGDlgLayout.addRow(self.GuardButton)
+        self.SteamGDlg.setWindowTitle("Steam Guard Dialog")
+        self.SteamGDlg.setLayout(self.SteamGDlgLayout)
+        self.SteamGDlg.exec()
+
+    def LoginFinish(self):
+        Util.Loading = False
+        try:
+            self.SteamGDlg.close()
+        except:
+            pass
+        self.FinishedLogging = True
+
+    def PasswordFail(self):
+        Util.Loading = False
+        try:
+            self.LoadingDialog.close()
+        except:
+            pass
+        self.SteamPDlg = QDialog()
+        self.SteamPDlgLayout = QFormLayout()
+
+        self.SteamPDlgLayout.addRow(QLabel("<h3>Incorrect Password.</h3>"))
+        self.SteamPDlgLayout.addRow(QLabel("<p>Please re-enter the password.</p>"))
+        self.SteamPDlgLayout.addRow(
+            QLabel("<p>Remember to <b>check</b> if it is correct.</p>")
+        )
+        self.SteamPDlg.setWindowTitle("Steam Password Dialog")
+        self.SteamPDlg.setLayout(self.SteamPDlgLayout)
+        self.SteamPDlg.exec()
 
     def GuardSteam(self):
         Settings = Util.Read_Settings()
 
         if Util.IsWindows():
             p = subprocess.Popen(
-                f'.FOLON-Downgrader-Files/SteamFiles/steamcmd.exe +login "{Settings["Username"]}" "{self.PasswordEntry.text()}" +quit',
+                f'FOLON-Downgrader-Files/SteamFiles/steamcmd.exe +login "{Settings["Username"]}" "{self.PasswordEntry.text()}" +quit',
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
             )
         else:
             p = subprocess.Popen(
-                f'.FOLON-Downgrader-Files/SteamFiles/steamcmd.sh +login "{Settings["Username"]}" "{self.PasswordEntry.text()}" +quit',
+                f'FOLON-Downgrader-Files/SteamFiles/steamcmd.sh +login "{Settings["Username"]}" "{self.PasswordEntry.text()}" +quit',
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
             )
@@ -266,7 +315,7 @@ class MainWindow(QTabWidget):
         if Util.IsWindows():
             p = subprocess.Popen(
                 [
-                    ".FOLON-Downgrader-Files/SteamFiles/steamcmd.exe",
+                    "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe",
                     "+login",
                     f'{Settings["Username"]}',
                     f"{self.PasswordEntry.text()}",
@@ -279,7 +328,7 @@ class MainWindow(QTabWidget):
         else:
             p = subprocess.Popen(
                 [
-                    ".FOLON-Downgrader-Files/SteamFiles/steamcmd.sh",
+                    "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh",
                     "+login",
                     f'{Settings["Username"]}',
                     f"{self.PasswordEntry.text()}",
@@ -298,12 +347,8 @@ class MainWindow(QTabWidget):
             )
             in p.communicate()[0]
         ):
+            self.LoginFinish()
 
-            try:
-                self.SteamGDlg.close()
-            except:
-                pass
-            print("DONE")
         elif bytes("rate limit", "UTF-8") in p.communicate()[0]:
             self.OpenRateDialog()
 
@@ -312,7 +357,7 @@ class MainWindow(QTabWidget):
             self.SteamGDlg.close()
         except:
             pass
-        RateDialog = QDialog(self)
+        RateDialog = QDialog()
         RateDialogLayout = QFormLayout()
         RateDialogLayout.addRow(QLabel("<h1>You are being rate limited</h1>"))
         RateDialogLayout.addRow(
@@ -334,12 +379,6 @@ class MainWindow(QTabWidget):
 
     def CloseRateDialog(self):
         sys.exit()
-
-    def print_output(self, s):
-        print(s)
-
-    def ContinueUI(self):
-        print("DONE WITH 1")
 
     ##########################################################################################
     # Installation                                                                           #
@@ -371,112 +410,164 @@ class MainWindow(QTabWidget):
             [393895, 7677765994120765493],
         ]
         if Util.IsWindows():
-            self.SteamFiles = ".FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"
+            self.SteamFiles = (
+                "FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"
+            )
         else:
-            self.SteamFiles = ".FOLON-Downgrader-Files/SteamFiles/linux32/steamapps/content/app_377160"
+            self.SteamFiles = (
+                "FOLON-Downgrader-Files/SteamFiles/linux32/steamapps/content/app_377160"
+            )
         self.index = 0
         layout = QFormLayout()
 
         SteamLabel = QLabel(text=str(Util.WhereSteam()))
         layout.addRow(SteamLabel)
 
-        InstallButton = QPushButton(text="Downgrade Fallout 4 (This will take a long time)")
+        InstallButton = QPushButton(
+            text="Downgrade Fallout 4 (This will take a long time)"
+        )
         InstallButton.pressed.connect(self.InstallInit)
         layout.addRow(InstallButton)
 
-        self.setTabText(1, "Installation")
         self.tab2.setLayout(layout)
-        # self.setTabEnabled(1, False)
+
+    def Load(self):
+        self.Loading(
+            lambda: time.sleep(5),
+            text=f"Moving depot[{self.index+1}/14]",
+            PostFunction=self.InstallInit,
+        )
 
     def InstallInit(self):
-        print(os.path.isdir(f"{self.SteamFiles}/depot_{self.Depots[self.index][0]}"))
-        #if os.path.isdir(f"{self.SteamFiles}/depot_{self.Depots[self.index][0]}") and self.index < 14:
-        if self.index < 13:
-            if not os.path.isdir(
-                    f"{self.SteamFiles}/depot_{self.Depots[self.index][0]}"
-                ):
-                self.Loading(lambda:self.Install(self.index), text=f"Downloading depot[{self.index+1}/14]", PostFunction=self.InstallInit)
-            else:
-                self.Loading(lambda:self.CopyFiles(self.index), text=f"Moving depot[{self.index+1}/14]", PostFunction=self.InstallInit)
+        if not os.path.isdir(f"{self.SteamFiles}"):
+            self.Loading(
+                lambda: self.Install(self.index),
+                text=f"Downloading depot[{self.index+1}/14]",
+                PostFunction=self.InstallInit,
+            )
+        else:
+            self.Loading(
+                lambda: self.CopyFiles(self.index),
+                text=f"Moving depot[{self.index+1}/14]",
+            )
 
     def Install(self, index):
         Settings = Util.Read_Settings()
         if Util.IsWindows():
-            subprocess.run(
-                [
-                    ".FOLON-Downgrader-Files/SteamFiles/steamcmd.exe",
-                    "+login",
-                    f'{Settings["Username"]}',
-                    f"{self.PasswordEntry.text()}",
-                    "+download_depot",
-                    f"377160",
-                    f"{self.Depots[index][0]}",
-                    f"{self.Depots[index][1]}",
-                    "+quit",
-                ]
-            )
+            command = [
+                "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe",
+                "+login",
+                f'{Settings["Username"]}',
+                f"{self.PasswordEntry.text()}",
+                "+force_install_dir",
+                "../csgo_ds",
+                "+runscript",
+                f"{os.getcwd()}/DownloadFallout4.txt",
+                "+quit",
+            ]
         else:
-            subprocess.run(
-                [
-                    ".FOLON-Downgrader-Files/SteamFiles/steamcmd.sh",
-                    "+login",
-                    f'{Settings["Username"]}',
-                    f"{self.PasswordEntry.text()}",
-                    "+download_depot",
-                    f"377160",
-                    f"{self.Depots[index][0]}",
-                    f"{self.Depots[index][1]}",
-                    "+quit",
-                ]
-            )
+            command = [
+                "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh",
+                "+login",
+                f'{Settings["Username"]}',
+                f"{self.PasswordEntry.text()}",
+                "+force_install_dir",
+                "../csgo_ds",
+                "+runscript",
+                Util.resource_path("DownloadFallout4.txt"),
+                "+quit",
+            ]
+
+        process = subprocess.Popen(
+            command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
+
+        while process.poll() is None:
+            nextline = process.stdout.readline()
+            if b"Depot download complete" in nextline:
+                self.index += 1
+                if self.index < 14:
+                    print("Done")
+            elif nextline == "":
+                continue
+            print(nextline.strip())
+
+        """if Util.IsWindows():
+                                    subprocess.run(
+                                        [
+                                            "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe",
+                                            "+login",
+                                            f'{Settings["Username"]}',
+                                            f"{self.PasswordEntry.text()}",
+                                            "+download_depot",
+                                            f"377160",
+                                            f"{self.Depots[index][0]}",
+                                            f"{self.Depots[index][1]}",
+                                            "+quit",
+                                        ]
+                                    )
+                                else:
+                                    subprocess.run(
+                                        [
+                                            "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh",
+                                            "+login",
+                                            f'{Settings["Username"]}',
+                                            f"{self.PasswordEntry.text()}",
+                                            "+force_install_dir", 
+                                            "../csgo_ds",
+                                            "+runscript",
+                                            f"{os.getcwd}/DownloadFallout4.txt",
+                                            "+quit",
+                                        ]
+                                    )"""
 
     def CopyFiles(self, index):
-        try:
-            if Util.IsBundled():
-                Destination = "."
-            else:
-                Destination = "../Fallout 4"
-            if not os.path.isdir(Destination):
-                mkdir(Destination)
-            Depot = self.Depots[index][0]
-
-            print("Started Depot:", Depot)
-            for a in os.listdir(f"{self.SteamFiles}/depot_{Depot}"):
-                if os.path.isdir(f"{self.SteamFiles}/depot_{Depot}/{a}"):
-                    for b in os.listdir(f"{self.SteamFiles}/depot_{Depot}/{a}"):
-                        if not os.path.isdir(f"{Destination}/{a}"):
-                            os.mkdir(f"{Destination}/{a}")
-                        shutil.move(
-                            f"{self.SteamFiles}/depot_{Depot}/{a}/{b}",
-                            f"{Destination}/{a}/{b}",
-                        )
+        for i in self.Depots:
+            Depot = i
+            try:
+                if Util.IsBundled():
+                    Destination = "."
                 else:
-                    shutil.move(
-                        f"{self.SteamFiles}/depot_{Depot}/{a}", f"{Destination}/{a}"
-                    )
-                print("moved:", a)
-            shutil.rmtree(f"{self.SteamFiles}/depot_{Depot}")
-            print("Finished Depot:", Depot)
-            self.index += 1
-        except:
-            print("Skipped Depot:", Depot)
+                    Destination = "../Fallout 4"
+                if not os.path.isdir(Destination):
+                    mkdir(Destination)
+
+                print("Started Depot:", Depot[0])
+                for a in os.listdir(f"{self.SteamFiles}/depot_{Depot[0]}"):
+                    if os.path.isdir(f"{self.SteamFiles}/depot_{Depot[0]}/{a}"):
+                        for b in os.listdir(f"{self.SteamFiles}/depot_{Depot[0]}/{a}"):
+                            if not os.path.isdir(f"{Destination}/{a}"):
+                                os.mkdir(f"{Destination}/{a}")
+                            shutil.move(
+                                f"{self.SteamFiles}/depot_{Depot[0]}/{a}/{b}",
+                                f"{Destination}/{a}/{b}",
+                            )
+                    else:
+                        shutil.move(
+                            f"{self.SteamFiles}/depot_{Depot[0]}/{a}",
+                            f"{Destination}/{a}",
+                        )
+                    print("moved:", a)
+                shutil.rmtree(f"{self.SteamFiles}/depot_{Depot[0]}")
+                print("Finished Depot:", Depot)
+            except:
+                print("Skipped Depot:", Depot)
+        shutil.rmtree(self.SteamFiles)
 
 
 def main():
     app = QApplication(sys.argv)
-    if Util.IsBundled():
-        sshFile = ".FOLON-Downgrader-Files/FOLON.css"
-    else:
-        sshFile = "FOLON.css"
-        #if os.path.isdir(".FOLON-Downgrader-Files"):
-        #    shutil.rmtree(".FOLON-Downgrader-Files")
+    CSSFile = Util.resource_path("FOLON.css")
+    with open(CSSFile, "r") as fh:
+        app.setStyleSheet(fh.read())
+
     ex = MainWindow()
     ex.setMinimumWidth(750)
     ex.setMinimumHeight(575)
     ex.setMaximumWidth(750)
     ex.setMaximumHeight(575)
     ex.show()
-    
+
     # Redirect stdout to a file
     sys.exit(app.exec())
 

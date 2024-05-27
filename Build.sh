@@ -5,9 +5,8 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pip install -U pyinstaller
 python -m pip install -U black
-python -m black FOLON-Installer.py
+python -m black FOLON-Downgrader.py
 
-python -m PyInstaller --clean -y "FOLON-Installer.spec"
+python -m PyInstaller --clean -y "FOLON-Downgrader.spec"
 
-cd dist/FOLON-Installer/
-./FOLON-Installer
+dist/FOLON-Downgrader
