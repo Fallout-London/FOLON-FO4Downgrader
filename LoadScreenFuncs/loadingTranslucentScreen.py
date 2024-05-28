@@ -63,16 +63,13 @@ class LoadingTranslucentScreen(QWidget):
             self.__timer.start(500)
 
     def __ticking(self):
-        if Util.Loading:
-            dot = "."
-            cur_text = self.__descriptionLbl.text()
-            cnt = cur_text.count(dot)
-            if cnt % 3 == 0 and cnt != 0:
-                self.__descriptionLbl.setText(self.__descriptionLbl_original_text + dot)
-            else:
-                self.__descriptionLbl.setText(cur_text + dot)
+        dot = "."
+        cur_text = self.__descriptionLbl.text()
+        cnt = cur_text.count(dot)
+        if cnt % 3 == 0 and cnt != 0:
+            self.__descriptionLbl.setText(self.__descriptionLbl_original_text + dot)
         else:
-            self.stop()
+            self.__descriptionLbl.setText(cur_text + dot)
 
     def setParentThread(self, parent_thread: QThread):
         self.__thread = parent_thread

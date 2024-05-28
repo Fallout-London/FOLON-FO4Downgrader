@@ -1,26 +1,40 @@
-/*QWidget {
-    font: "Courier New";
-    background-color: #292831;
-    color: #fbbbad;
-}
 QWidget {
-    background-color: #292831;
-    color: #fbbbad;
-}
-QLineEdit {
+    font: "Open Sans";
+    background-color: #222222;
+    color: #c4c4c4;
     padding: 5px;
-    border: 2px solid #fbbbad;
+}
+QLineEdit, QPushButton {
+    border: 2px solid #c4c4c4;
     border-radius: 10px;
 }
 QLineEdit::placeholder {
     color: grey;
 }
+QPushButton::Hover, QCheckBox::indicator::Hover,QPushButton::Focus, QCheckBox::indicator::Focus {
+    background-color: grey;
+}
 
-QPushButton {
-    padding: 5px;
-    border: 2px solid #fbbbad;
+QProgressBar {
+    qproperty-alignment: AlignCenter;
+    border: 2px solid #c4c4c4;
     border-radius: 10px;
 }
-QPushButton::Hover {
-    background-color: grey;
+QProgressBar::chunk {
+    border-radius: 7px;
+    background-color: #c4c4c4;
+}
+QCheckBox {
+    background-color: none;
+    border: none;
+}
+QCheckBox::indicator {
+    width: 15px;
+    height: 15px;
+    background-color: #222222;
+    border: 2px solid #c4c4c4;
+    border-radius: 10px;
+}
+QCheckBox::indicator::Checked {
+    image: url("FOLON-Downgrader-Files/check-solid.svg");
 }

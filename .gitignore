@@ -2,7 +2,7 @@
 /build
 /dist
 /SteamFiles
-/__pycache__
+*__pycache__*
 /.venv
 /FOLON-Downgrader-Files
 .fuse_hidden*
