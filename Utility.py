@@ -1,7 +1,6 @@
 def init():
     global LoginResult
     global Loading
-    LoginResult = ""
     InstallSteps = 2
     Loading = False
 
@@ -108,7 +107,7 @@ def Read_Settings():
         # Closing file
         f.close()
     except:
-        settings = {"Username": ""}
+        settings = {"Username": "", "LoginResult": ""}
 
     return settings
 

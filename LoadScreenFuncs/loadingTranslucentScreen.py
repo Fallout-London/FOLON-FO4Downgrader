@@ -39,6 +39,9 @@ class LoadingTranslucentScreen(QWidget):
         if description_text.strip() != "":
             self.__descriptionLbl.setText(description_text)
             self.__descriptionLbl.setVisible(False)
+            self.__descriptionLbl.setStyleSheet(
+                "QLabel { background: transparent; color: black; }"
+            )
             self.__descriptionLbl.setAlignment(Qt.AlignVCenter | Qt.AlignCenter)
 
         lay = QGridLayout()

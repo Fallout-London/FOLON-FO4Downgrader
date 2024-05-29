@@ -6,6 +6,7 @@ import Utility as Util
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon
+import argparse
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
 
@@ -228,28 +229,42 @@ class MainWindow(QMainWindow):
                     stdout=subprocess.PIPE,
                 )
         p.communicate(b"quit")
+        print(p.communicate()[0])
         if (
             b"You can also enter this code at any time using 'set_steam_guard_code'"
             in p.communicate()[0]
         ):
-            Util.LoginResult = "Guard"
+            Settings["LoginResult"] = "Guard"
+            Util.Write_Settings(Settings)
+        elif (
+            b"Enter the current code from your Steam Guard Mobile Authenticator app"
+            in p.communicate()[0]
+        ):
+            Settings["LoginResult"] = "Guard2"
+            Util.Write_Settings(Settings)
         elif (
             bytes(f"Logging in user '{Username}' to Steam Public...OK", "UTF-8")
             in p.communicate()[0]
         ):
-            Util.LoginResult = "Success"
+            Settings["LoginResult"] = "Success"
+            Util.Write_Settings(Settings)
 
-        elif bytes("rate limit", "UTF-8") in p.communicate()[0]:
-            Util.LoginResult = "Rate"
+        elif bytes("Rate Limit", "UTF-8") in p.communicate()[0]:
+            Settings["LoginResult"] = "Rate"
+            Util.Write_Settings(Settings)
 
         elif b"FAILED (Invalid Password)" in p.communicate()[0]:
-            Util.LoginResult = "PasswordFail"
+            Settings["LoginResult"] = "PasswordFail"
+            Util.Write_Settings(Settings)
 
     def LoginPopups(self):
-        result = Util.LoginResult
+        Settings = Util.Read_Settings()
+        result = Settings["LoginResult"]
         print(result)
         if result == "Guard":
             self.SteamDialog()
+        elif result == "Guard2":
+            self.SteamDialog2()
         elif result == "Success":
             self.LoginFinish()
         elif result == "Rate":
@@ -270,6 +285,33 @@ class MainWindow(QMainWindow):
         )
         self.SteamGDlgLayout.addRow(
             QLabel("<p>to either your mail or phone, please enter it here.</p>")
+        )
+
+        self.GuardEntry = QLineEdit()
+        self.GuardButton = QPushButton(text="Submit")
+        self.GuardButton.pressed.connect(self.GuardSubmit)
+
+        self.SteamGDlgLayout.addRow(QLabel("<p>Steam guard code:</p>"), self.GuardEntry)
+        self.SteamGDlgLayout.addRow(self.GuardButton)
+        self.SteamGDlg.setWindowTitle("Steam Guard Dialog")
+        self.SteamGDlg.setLayout(self.SteamGDlgLayout)
+        self.SteamGDlg.exec()
+
+    def SteamDialog2(self):
+        Util.Loading = False
+        self.SteamGDlg = QDialog(self)
+        self.SteamGDlgLayout = QFormLayout()
+
+        self.SteamGDlgLayout.addRow(
+            QLabel("<h3>Please enter your Steam guard code.</h3>")
+        )
+        self.SteamGDlgLayout.addRow(
+            QLabel("<p>To authorize your identity Steam has sent a code</p>")
+        )
+        self.SteamGDlgLayout.addRow(
+            QLabel(
+                "<p>to either your Authenticator app, please enter authorise and enter it here.</p>"
+            )
         )
 
         self.GuardEntry = QLineEdit()
@@ -366,7 +408,9 @@ class MainWindow(QMainWindow):
             )
             in p.communicate()[0]
         ):
-            self.LoginFinish()
+            Settings["LoginResult"] = "Success"
+            Util.Write_Settings(Settings)
+            self.LoginPopups()
 
         elif bytes("rate limit", "UTF-8") in p.communicate()[0]:
             self.OpenRateDialog()
@@ -548,6 +592,9 @@ class MainWindow(QMainWindow):
 def main():
     if not os.path.isdir("FOLON-Downgrader-Files"):
         os.mkdir("FOLON-Downgrader-Files")
+    else:
+        shutil.rmtree("FOLON-Downgrader-Files")
+        os.mkdir("FOLON-Downgrader-Files")
     shutil.copy(Util.resource_path("img/check-solid.svg"), "FOLON-Downgrader-Files/")
 
     app = QApplication(sys.argv)
@@ -555,15 +602,40 @@ def main():
     with open(CSSFile, "r") as fh:
         app.setStyleSheet(fh.read())
     ex = MainWindow()
-    ex.setMinimumWidth(750)
-    ex.setMinimumHeight(575)
-    ex.setMaximumWidth(750)
-    ex.setMaximumHeight(575)
+    # ex.setMinimumWidth(750)
+    # ex.setMinimumHeight(575)
+    # ex.setMaximumWidth(750)
+    # ex.setMaximumHeight(575)
     ex.show()
 
     # Redirect stdout to a file
     sys.exit(app.exec())
 
 
+def directory(raw_path):
+    if not os.path.isdir(raw_path):
+        raise argparse.ArgumentTypeError(
+            '"{}" is not an existing directory'.format(raw_path)
+        )
+    return os.path.abspath(raw_path)
+
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="A Fallout 4 downgrader application by Team FOLON"
+    )
+    parser.add_argument(
+        "-p",
+        "--path",
+        required=False,
+        metavar="",
+        type=directory,
+        help="Path to steam(The directory containing a SteamApps folder)",
+    )
+    args = parser.parse_args()
+
+    if args.path:
+        print(os.listdir(args.path))
+        main()
+    else:
+        main()
