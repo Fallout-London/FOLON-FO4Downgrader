@@ -1,11 +1,23 @@
 QWidget {
     font: "Open Sans";
     background-color: #222222;
-    color: #c4c4c4;
     padding: 5px;
 }
-QLineEdit, QPushButton {
+QWidget:enabled {
+    color: #c4c4c4;
+}
+QLineEdit:enabled, QPushButton:enabled {
     border: 2px solid #c4c4c4;
+}
+QLineEdit:disabled, QPushButton:disabled {
+    color: #666666;
+    border: 2px solid #666666;
+}
+QLineEdit:enabled {
+    background-color: #111111;
+    border-radius: 5px;
+}
+QPushButton{
     border-radius: 10px;
 }
 QLineEdit::placeholder {
@@ -13,6 +25,10 @@ QLineEdit::placeholder {
 }
 QPushButton::Hover, QCheckBox::indicator::Hover,QPushButton::Focus, QCheckBox::indicator::Focus {
     background-color: grey;
+}
+
+QLabel#ImageLabel ,QPixmap{
+    border-radius: 50px;
 }
 
 QProgressBar {
@@ -36,5 +52,5 @@ QCheckBox::indicator {
     border-radius: 10px;
 }
 QCheckBox::indicator::Checked {
-    image: url("FOLON-Downgrader-Files/check-solid.svg");
+    image: url("FOLON-Downgrader-Files/check.svg");
 }

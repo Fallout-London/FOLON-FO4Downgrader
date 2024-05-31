@@ -5,7 +5,7 @@ import os
 import Utility as Util
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QPixmap
 import argparse
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
@@ -16,8 +16,6 @@ class Communicate(QObject):
 
 
 class ScreenThread(LoadingThread):
-    # Thanks to Yousef Azizi for his PyQtLoadingscreen script
-
     def __init__(
         self,
         Function,
@@ -298,36 +296,234 @@ class MainWindow(QMainWindow):
         self.SteamGDlg.exec()
 
     def SteamDialog2(self):
+        self.shown = False
         Util.Loading = False
         self.SteamGDlg = QDialog(self)
-        self.SteamGDlgLayout = QFormLayout()
+        SteamGDlgLayout = QGridLayout()
 
-        self.SteamGDlgLayout.addRow(
-            QLabel("<h3>Please enter your Steam guard code.</h3>")
+        HelpBox = QVBoxLayout()
+
+        HelpButton = QPushButton()
+        HelpButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        HelpButton.setIcon(QIcon(Util.resource_path("img/info.svg")))
+        HelpButton.pressed.connect(lambda: self.SteamGuideDialog(self.SteamGDlg))
+
+        HelpBox.addWidget(HelpButton, alignment=Qt.AlignRight)
+
+        HelpLabel = QLabel("<h3>Please authorise Steam guard.</h3>")
+
+        SteamGDlgLayout.addWidget(HelpLabel, 0, 0)
+        SteamGDlgLayout.addItem(HelpBox, 0, 1)
+
+        labelbox1 = QVBoxLayout()
+        labelbox1.addWidget(
+            QLabel("<p>To authorize your identity Steam has sent a code to your</p>")
         )
-        self.SteamGDlgLayout.addRow(
-            QLabel("<p>To authorize your identity Steam has sent a code</p>")
+
+        SteamGDlgLayout.addItem(
+            labelbox1,
+            1,
+            0,
+            1,
+            2,
         )
-        self.SteamGDlgLayout.addRow(
-            QLabel(
-                "<p>to either your Authenticator app, please enter authorise and enter it here.</p>"
-            )
+        labelbox2 = QVBoxLayout()
+        labelbox2.addWidget(
+            QLabel("<p>Steam app, please enter authorise and enter it here.</p>")
         )
+        SteamGDlgLayout.addItem(
+            labelbox2,
+            2,
+            0,
+            1,
+            2,
+        )
+
+        GuardLabel = QLabel("<p>Steam guard code:</p>")
+        GuardLabel.setObjectName("Guard2Label")
 
         self.GuardEntry = QLineEdit()
-        self.GuardButton = QPushButton(text="Submit")
-        self.GuardButton.pressed.connect(self.GuardSubmit)
+        self.GuardEntry.setObjectName("Guard2Entry")
+        self.GuardEntry.setPlaceholderText("Steam guard code")
+        self.GuardEntry.setFocus(True)
 
-        self.SteamGDlgLayout.addRow(QLabel("<p>Steam guard code:</p>"), self.GuardEntry)
-        self.SteamGDlgLayout.addRow(self.GuardButton)
+        GuardSpacer = QSpacerItem(10, 20)
+        LineBox = QHBoxLayout()
+        LineBox.addItem(GuardSpacer)
+        LineBox.addWidget(self.GuardEntry)
+        LineBox.addItem(GuardSpacer)
+
+        GuardButton = QPushButton(text="Submit")
+        GuardButton.pressed.connect(self.GuardSubmit)
+
+        GuardBox = QVBoxLayout()
+        GuardBox.addWidget(GuardButton)
+
+        # SteamGDlgLayout.addWidget(GuardLabel, 3, 0)
+        SteamGDlgLayout.addItem(LineBox, 3, 0, 1, 2)
+        SteamGDlgLayout.addItem(GuardBox, 4, 0, 1, 2)
         self.SteamGDlg.setWindowTitle("Steam Guard Dialog")
-        self.SteamGDlg.setLayout(self.SteamGDlgLayout)
+        self.SteamGDlg.setLayout(SteamGDlgLayout)
+        self.GuardEntry.setFocus()
         self.SteamGDlg.exec()
+
+    def SteamGuideDialog(self, parent):
+        if not self.shown:
+            self.SGDIndex = 1
+            self.GuideDialog = QDialog(parent)
+            GuideBox = QVBoxLayout()
+            button_layout = QHBoxLayout()
+            self.SteamGuideLayout = QStackedLayout()
+
+            GuideBox.addLayout(self.SteamGuideLayout)
+            GuideBox.addLayout(button_layout)
+
+            Page1 = QWidget()
+            Page1Layout = QGridLayout()
+
+            GuideLabel1 = QLabel(
+                "<p>To authorize please open the Steam app on your phone</p>"
+            )
+            GuideLabel2 = QLabel("<p>and click Approve.</p>")
+            ImageLabel1 = QLabel(text="1")
+            ImageLabel1.setObjectName("ImageLabel")
+            SteamAuth = QPixmap(Util.resource_path("img/SteamAuth.png")).scaled(
+                350, 414
+            )
+
+            ImageLabel1.setPixmap(SteamAuth)
+
+            Page1Layout.addWidget(GuideLabel1)
+            Page1Layout.addWidget(GuideLabel2)
+            Page1Layout.addWidget(ImageLabel1)
+
+            Page1.setLayout(Page1Layout)
+
+            Page2 = QWidget()
+            Page2Layout = QGridLayout()
+
+            GuideLabel3 = QLabel("<p>Click on the shield icon in the bottom bar</p>")
+            GuideLabel4 = QLabel('<p>Then "Show Steam Guard code".</p>')
+            GuideLabel5 = QLabel("<p>When prompted about a security warning simply</p>")
+            GuideLabel6 = QLabel('<p>click Show Steam Guard code" again.</p>')
+
+            ImageLabel2 = QLabel(text="2")
+            ImageLabel3 = QLabel(text="3")
+            ImageLabel2.setObjectName("ImageLabel")
+            ImageLabel3.setObjectName("ImageLabel")
+
+            SteamShow = QPixmap(Util.resource_path("img/SteamShow.png")).scaled(
+                350, 127
+            )
+            SteamConfirm = QPixmap(Util.resource_path("img/SteamConfirm.png")).scaled(
+                350, 275
+            )
+
+            ImageLabel2.setPixmap(SteamShow)
+            ImageLabel3.setPixmap(SteamConfirm)
+
+            Page2Layout.addWidget(GuideLabel3)
+            Page2Layout.addWidget(GuideLabel4)
+            Page2Layout.addWidget(ImageLabel2)
+            Page2Layout.addWidget(GuideLabel5)
+            Page2Layout.addWidget(GuideLabel6)
+            Page2Layout.addWidget(ImageLabel3)
+
+            Page2.setLayout(Page2Layout)
+
+            Page3 = QWidget()
+            Page3Layout = QVBoxLayout()
+
+            GuideLabel7 = QLabel("<p>You should end up on this screen,</p>")
+            GuideLabel8 = QLabel(
+                "<p>enter the code on your screen into the text field.</p>"
+            )
+            GuideLabel9 = QLabel(
+                "<p>Do <b>NOT</b> enter a code after it's dissapeared.</p>"
+            )
+
+            ImageLabel4 = QLabel(text="4")
+            ImageLabel4.setObjectName("ImageLabel")
+
+            SteamCode = QPixmap(Util.resource_path("img/SteamCode.png")).scaled(
+                350, 344
+            )
+
+            ImageLabel4.setPixmap(SteamCode)
+            Page3Layout.addWidget(GuideLabel7)
+            Page3Layout.addWidget(GuideLabel8)
+            Page3Layout.addWidget(ImageLabel4)
+
+            Page3.setLayout(Page3Layout)
+
+            self.SGDBBtn = QPushButton()
+            self.SGDBBtn.setEnabled(False)
+            self.SGDBBtn.setIcon(
+                QIcon(Util.resource_path("img/arrow-left-Disabled.svg"))
+            )
+            self.SGDBBtn.pressed.connect(lambda: self.SteamGUideCrement("-1"))
+            button_layout.addWidget(self.SGDBBtn)
+
+            self.SGDFBtn = QPushButton()
+            self.SGDFBtn.setIcon(QIcon(Util.resource_path("img/arrow-right.svg")))
+            self.SGDFBtn.pressed.connect(lambda: self.SteamGUideCrement("1"))
+            button_layout.addWidget(self.SGDFBtn)
+
+            self.SteamGuideLayout.addWidget(Page1)
+            self.SteamGuideLayout.addWidget(Page2)
+            self.SteamGuideLayout.addWidget(Page3)
+
+            self.GuideDialog.setLayout(GuideBox)
+            self.GuideDialog.move(parent.x() + parent.width(), parent.y())
+            self.GuideDialog.show()
+        else:
+            self.GuideDialog.close()
+        self.shown = not self.shown
+
+    def SteamGUideCrement(self, Unit):
+        if Unit == "1":
+            if not self.SGDIndex >= 3:
+                self.SGDIndex += 1
+            if self.SGDIndex >= 3:
+                self.SGDFBtn.setEnabled(False)
+                self.SGDFBtn.setIcon(
+                    QIcon(Util.resource_path("img/arrow-right-Disabled.svg"))
+                )
+            else:
+                self.SGDBBtn.setEnabled(True)
+                self.SGDBBtn.setIcon(QIcon(Util.resource_path("img/arrow-left.svg")))
+        elif Unit == "-1":
+            if not self.SGDIndex <= 1:
+                self.SGDIndex -= 1
+            if self.SGDIndex <= 1:
+                self.SGDBBtn.setEnabled(False)
+                self.SGDBBtn.setIcon(
+                    QIcon(Util.resource_path("img/arrow-left-Disabled.svg"))
+                )
+            else:
+                self.SGDFBtn.setEnabled(True)
+                self.SGDFBtn.setIcon(QIcon(Util.resource_path("img/arrow-right.svg")))
+        FunctionName = f"SteamGuideTab{self.SGDIndex}"
+        func = getattr(self, FunctionName)
+        func()
+
+    def SteamGuideTab1(self):
+        self.SteamGuideLayout.setCurrentIndex(0)
+
+    def SteamGuideTab2(self):
+        self.SteamGuideLayout.setCurrentIndex(1)
+
+    def SteamGuideTab3(self):
+        self.SteamGuideLayout.setCurrentIndex(2)
 
     def LoginFinish(self):
         Util.Loading = False
         try:
             self.SteamGDlg.close()
+        except:
+            pass
+        try:
+            self.GuideDialog.close()
         except:
             pass
         self.FinishedLogging = True
@@ -350,6 +546,13 @@ class MainWindow(QMainWindow):
         self.SteamPDlg.setWindowTitle("Steam Password Dialog")
         self.SteamPDlg.setLayout(self.SteamPDlgLayout)
         self.SteamPDlg.exec()
+
+    def GuardSteamInit(self):
+        self.Loading(
+            self.GuardSteam,
+            text="Loading Steam backend",
+            PostFunction=self.LoginPopups,
+        )
 
     def GuardSteam(self):
         Settings = Util.Read_Settings()
@@ -399,25 +602,21 @@ class MainWindow(QMainWindow):
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
             )
-        Code = self.GuardEntry.text()
-        p.communicate(bytes(Code + "\n", "UTF-8"))
-        if (
-            bytes(
-                f"Logging in user '{Settings['Username']}' to Steam Public...OK",
-                "UTF-8",
-            )
-            in p.communicate()[0]
-        ):
+        print(p.communicate()[0])
+        if b"OK" in p.communicate()[0]:
             Settings["LoginResult"] = "Success"
             Util.Write_Settings(Settings)
-            self.LoginPopups()
 
-        elif bytes("rate limit", "UTF-8") in p.communicate()[0]:
+        elif bytes("Rate Limit Exceeded", "UTF-8") in p.communicate()[0]:
             self.OpenRateDialog()
 
     def OpenRateDialog(self):
         try:
             self.SteamGDlg.close()
+        except:
+            pass
+        try:
+            self.GuideDialog.close()
         except:
             pass
         RateDialog = QDialog()
@@ -448,7 +647,6 @@ class MainWindow(QMainWindow):
     ##########################################################################################
 
     def tab2UI(self):
-        # Thanks to Zerratar for reference implementation in his FO4-Downgrader
         self.Depots = [
             # Main game
             [377161, 7497069378349273908],
@@ -592,10 +790,10 @@ class MainWindow(QMainWindow):
 def main():
     if not os.path.isdir("FOLON-Downgrader-Files"):
         os.mkdir("FOLON-Downgrader-Files")
-    else:
-        shutil.rmtree("FOLON-Downgrader-Files")
-        os.mkdir("FOLON-Downgrader-Files")
-    shutil.copy(Util.resource_path("img/check-solid.svg"), "FOLON-Downgrader-Files/")
+    # else:
+    # shutil.rmtree("FOLON-Downgrader-Files")
+    # os.mkdir("FOLON-Downgrader-Files")
+    shutil.copy(Util.resource_path("img/check.svg"), "FOLON-Downgrader-Files/")
 
     app = QApplication(sys.argv)
     CSSFile = Util.resource_path("FOLON.css")
