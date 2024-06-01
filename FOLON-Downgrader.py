@@ -5,7 +5,7 @@ import os
 import Utility as Util
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
 import argparse
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
@@ -30,9 +30,25 @@ class ScreenThread(LoadingThread):
         self._Function()
 
 
+def SetupFont():
+    import zipfile
+
+    if not os.path.isdir("FOLON-Downgrader-Files/Fonts"):
+        os.system(
+            'curl -sqL "https://dl.dafont.com/dl/?f=overseer" -o FOLON-Downgrader-Files/overseer.zip'
+        )
+        with zipfile.ZipFile("FOLON-Downgrader-Files/overseer.zip", "r") as zip_ref:
+            zip_ref.extractall("FOLON-Downgrader-Files/Fonts")
+        os.remove("FOLON-Downgrader-Files/overseer.zip")
+
+    QFontDatabase.addApplicationFont("FOLON-Downgrader-Files/Fonts/Overseer.otf")
+
+
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, steampath=None):
         super().__init__()
+        self.TabIndex = 1
+        Settings = Util.Read_Settings()
         self.setWindowTitle("FOLON Fallout 4 downgrader")
         FOLONIcon = QIcon(Util.resource_path("FOLON-Downgrader-Files/img/FOLON256.png"))
         self.setWindowIcon(FOLONIcon)
@@ -52,19 +68,41 @@ class MainWindow(QMainWindow):
         self.stacklayout.addWidget(self.tab2)
         self.tab2UI()
 
+        self.tab3 = QWidget()
+        self.stacklayout.addWidget(self.tab3)
+        self.tab3UI()
+
         self.InstallProgress = QProgressBar(self)
-        self.InstallProgress.setFormat("Login to Steam")
-        self.InstallProgress.setValue(10)
+        self.InstallProgress.setFormat("Locate SteamApps folder")
+        print(Settings["Steps"])
+        self.InstallProgress.setObjectName("DowngraderProgress")
+        self.InstallProgress.setRange(0, Settings["Steps"])
+        self.InstallProgress.setValue(1)
+
         button_layout.addWidget(self.InstallProgress)
 
         widget = QWidget()
         widget.setLayout(pagelayout)
         self.setCentralWidget(widget)
 
+        if steampath != None:
+            self.SteamPath = steampath
+            self.activate_tab_2()
+        else:
+            self.SteamPath = "."
+
     def activate_tab_2(self):
+        self.TabIndex += 1
+        self.stacklayout.setCurrentIndex(1)
+        self.InstallProgress.setFormat("Login to Steam")
+        self.InstallProgress.setValue(self.TabIndex)
+
+    def activate_tab_3(self):
         if self.FinishedLogging:
-            self.stacklayout.setCurrentIndex(1)
-            self.InstallProgress.setValue(20)
+            self.TabIndex += 1
+            self.stacklayout.setCurrentIndex(2)
+            self.InstallProgress.setFormat("Downgrade Fallout 4")
+            self.InstallProgress.setValue(self.TabIndex)
 
     #########################################################################################
     # GENERAL GUI                                                                           #
@@ -90,17 +128,154 @@ class MainWindow(QMainWindow):
         self.__thread.start()
 
     ##########################################################################################
-    # STEAM LOGIN                                                                            #
+    # STEAM PATH                                                                             #
     ##########################################################################################
 
     def tab1UI(self):
+        Settings = Util.Read_Settings()
+        layout = QFormLayout()
+
+        Header = QLabel("Please put in the path to your Steam folder.")
+        Header.setFont(QFont("Overseer", 30))
+        layout.addRow(Header)
+        layout.addRow(
+            QLabel(
+                "<p>To downgrade Fallout 4 we will need the path to steam your (or where you'd want Fallout 4 installed),</p>"
+            )
+        )
+        layout.addRow(
+            QLabel(
+                '<p>The folder <b>should</b> be the one containing a "Steamapps" folder.</p>'
+            )
+        )
+
+        self.PathSubmit = QPushButton(text="Continue")
+
+        self.PathSubmit.pressed.connect(self.SubmitPath)
+
+        hbox = QHBoxLayout()
+
+        self.PathEntry = QLineEdit()
+        self.PathEntry.returnPressed.connect(self.SubmitPath)
+        if Settings["SteamPath"] != "":
+            self.PathEntry.setText(Settings["SteamPath"])
+            self.PathSubmit.setEnabled(True)
+        else:
+            self.PathSubmit.setEnabled(False)
+        self.PathEntry.textChanged.connect(self.edit_text_changed1)
+
+        self.PathButton = QPushButton()
+        self.PathButton.setIcon(QIcon(Util.resource_path("img/folder.svg")))
+        self.PathButton.pressed.connect(self.GetDirectory)
+
+        hbox.addWidget(self.PathEntry)
+        hbox.addWidget(self.PathButton)
+
+        layout.addRow(QLabel("Steam Path:"), hbox)
+        layout.addRow(self.PathSubmit)
+
+        self.tab1.setLayout(layout)
+
+    def edit_text_changed1(self, text):
+        if self.PathEntry.text() == "":
+            self.PathSubmit.setEnabled(False)
+        else:
+            self.PathSubmit.setEnabled(True)
+
+    def GetDirectory(self):
+        folderpath = QFileDialog.getExistingDirectory(self, "Select Folder")
+        print(folderpath)
+        self.PathEntry.setText(folderpath)
+
+    def SubmitPath(self):
+        if os.path.isdir(self.PathEntry.text()):
+            if "steamapps" in str(os.listdir(self.PathEntry.text())):
+                Settings = Util.Read_Settings()
+                Settings["SteamPath"] = self.PathEntry.text()
+                Util.Write_Settings(Settings)
+                self.activate_tab_2()
+            else:
+                self.WrongPathDialog2(self.PathEntry.text())
+        else:
+            self.WrongPathDialog1()
+
+    def WrongPathDialog1(self):
+        self.PathWrong1Dialog = QDialog(self)
+        PathWrong1DialogLayout = QVBoxLayout()
+
+        PathWrong1DialogLayout.addWidget(QLabel("This is not a valid Folder"))
+        ReturnButton = QPushButton(text="Return")
+        ReturnButton.pressed.connect(lambda: self.PathWrong1Dialog.close())
+        PathWrong1DialogLayout.addWidget(ReturnButton)
+        self.PathWrong1Dialog.setLayout(PathWrong1DialogLayout)
+        self.PathWrong1Dialog.exec()
+
+        print("Not valid dir")
+
+    def WrongPathDialog2(self, path):
+        self.PathWrong2Dialog = QDialog(self)
+        PathWrong2DialogLayout = QVBoxLayout()
+        PathWrong2DialogLayout.addWidget(
+            QLabel(f"<b>{path}</b> does not contain a steamapps folder")
+        )
+        PathWrong2DialogLayout.addWidget(
+            QLabel("Would you like to use the folder anyway?")
+        )
+        PathWrong2DialogLayout.addWidget(
+            QLabel("(This just downloads fallout 4 to the folder)")
+        )
+        ReturnButton = QPushButton(text="Return")
+        ReturnButton.pressed.connect(lambda: self.PathWrong2Dialog.close())
+        ContinueButton = QPushButton(text="Continue")
+        ContinueButton.pressed.connect(lambda: self.WrongPathDialog3(path))
+        ContinueButton.pressed.connect(lambda: self.PathWrong2Dialog.close())
+
+        HBox = QHBoxLayout()
+        HBox.addWidget(ReturnButton)
+        HBox.addWidget(ContinueButton)
+        PathWrong2DialogLayout.addItem(HBox)
+
+        self.PathWrong2Dialog.setLayout(PathWrong2DialogLayout)
+        self.PathWrong2Dialog.exec()
+
+    def WrongPathDialog3(self, path):
+        try:
+            f = open(path + "/FOLON-Downgrader-TestFile", "w")
+            f.write("Testing...")
+            f.close()
+            f = open(path + "/FOLON-Downgrader-TestFile", "r")
+            print(f.read())
+            f.close()
+            os.remove(path + "/FOLON-Downgrader-TestFile")
+        except:
+            self.PathWrong3Dialog = QDialog(self)
+            PathWrong3DialogLayout = QVBoxLayout()
+            PathWrong3DialogLayout.addWidget(
+                QLabel(f"You do not own the <b>{path}</b> folder")
+            )
+            PathWrong3DialogLayout.addWidget(
+                QLabel(f"Please try to take ownership of this folder and try again.")
+            )
+            ReturnButton = QPushButton(text="Return")
+            ReturnButton.pressed.connect(lambda: self.PathWrong3Dialog.close())
+
+            PathWrong3DialogLayout.addWidget(ReturnButton)
+
+            self.PathWrong3Dialog.setLayout(PathWrong3DialogLayout)
+            self.PathWrong3Dialog.exec()
+
+    ##########################################################################################
+    # STEAM LOGIN                                                                            #
+    ##########################################################################################
+
+    def tab2UI(self):
         self.FinishedLogging = False
 
         layout = QFormLayout()
 
-        layout.addRow(
-            QLabel("<h1>Please log into Steam before downgrading Fallout 4.</h1>")
-        )
+        Header = QLabel("Please log into Steam before downgrading Fallout 4.")
+        Header.setFont(QFont("Overseer", 30))
+        layout.addRow(Header)
         layout.addRow(
             QLabel(
                 "<p>To downgrade Fallout 4 we will need to download files via Steam, please login to do so.</p>"
@@ -111,11 +286,11 @@ class MainWindow(QMainWindow):
         Settings = Util.Read_Settings()
         self.UsernameEntry.setText(Settings["Username"])
         self.UsernameEntry.returnPressed.connect(self.GoToPassword)
-        self.UsernameEntry.textChanged.connect(self.edit_text_changed)
+        self.UsernameEntry.textChanged.connect(self.edit_text_changed2)
         self.PasswordEntry = QLineEdit()
         self.PasswordEntry.setEchoMode(QLineEdit.EchoMode.Password)
         self.PasswordEntry.returnPressed.connect(self.SteamSubmit)
-        self.PasswordEntry.textChanged.connect(self.edit_text_changed)
+        self.PasswordEntry.textChanged.connect(self.edit_text_changed2)
         self.PasswordCheck = QCheckBox()
         self.PasswordCheck.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.PasswordCheck.setChecked(True)
@@ -123,18 +298,16 @@ class MainWindow(QMainWindow):
 
         self.LoginButton = QPushButton(text="Login to Steam")
         self.LoginButton.setEnabled(False)
-        self.LoginButton.pressed.connect(self.SteamSubmit)
+        self.LoginButton.pressed.connect(self.activate_tab_3)
 
         layout.addRow("Username:", self.UsernameEntry)
         layout.addRow("Password:", self.PasswordEntry)
         layout.addRow("Password hidden:", self.PasswordCheck)
         layout.addRow(self.LoginButton)
 
-        self.tab1.setLayout(layout)
+        self.tab2.setLayout(layout)
 
-    # Steam Functions
-
-    def edit_text_changed(self, text):
+    def edit_text_changed2(self, text):
         if self.UsernameEntry.text() == "" or self.PasswordEntry.text() == "":
             self.LoginButton.setEnabled(False)
         else:
@@ -174,12 +347,11 @@ class MainWindow(QMainWindow):
 
     def SetupSteam(self):
         import zipfile
-        import pathlib
 
         if os.path.isdir("FOLON-Downgrader-Files/SteamFiles"):
             shutil.rmtree("FOLON-Downgrader-Files/SteamFiles")
 
-        pathlib.Path.mkdir("FOLON-Downgrader-Files/SteamFiles")
+        os.mkdir("FOLON-Downgrader-Files/SteamFiles")
 
         if Util.IsWindows():
             os.system(
@@ -347,7 +519,7 @@ class MainWindow(QMainWindow):
         self.GuardEntry.setPlaceholderText("Steam guard code")
         self.GuardEntry.setFocus(True)
 
-        GuardSpacer = QSpacerItem(10, 20)
+        GuardSpacer = QSpacerItem(20, 20)
         LineBox = QHBoxLayout()
         LineBox.addItem(GuardSpacer)
         LineBox.addWidget(self.GuardEntry)
@@ -527,7 +699,7 @@ class MainWindow(QMainWindow):
         except:
             pass
         self.FinishedLogging = True
-        self.activate_tab_2()
+        self.activate_tab_3()
 
     def PasswordFail(self):
         Util.Loading = False
@@ -606,6 +778,7 @@ class MainWindow(QMainWindow):
         if b"OK" in p.communicate()[0]:
             Settings["LoginResult"] = "Success"
             Util.Write_Settings(Settings)
+            self.LoginPopups()
 
         elif bytes("Rate Limit Exceeded", "UTF-8") in p.communicate()[0]:
             self.OpenRateDialog()
@@ -646,7 +819,7 @@ class MainWindow(QMainWindow):
     # Installation                                                                           #
     ##########################################################################################
 
-    def tab2UI(self):
+    def tab3UI(self):
         self.Depots = [
             # Main game
             [377161, 7497069378349273908],
@@ -690,7 +863,7 @@ class MainWindow(QMainWindow):
         InstallButton.pressed.connect(self.InstallInit)
         layout.addRow(InstallButton)
 
-        self.tab2.setLayout(layout)
+        self.tab3.setLayout(layout)
 
     def Load(self):
         self.Loading(
@@ -739,16 +912,21 @@ class MainWindow(QMainWindow):
                 "+quit",
             ]
 
-        process = subprocess.Popen(
-            command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        InstallProcess = subprocess.Popen(
+            command,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
 
-        while process.poll() is None:
-            nextline = process.stdout.readline()
+        while InstallProcess.poll() is None:
+            nextline = InstallProcess.stdout.readline()
             if b"Depot download complete" in nextline:
                 self.index += 1
-                if self.index < 14:
+                if self.index < len(self.Depots):
                     print("Done")
+            elif b"Rate Limit Exceeded" in nextline:
+                self.RateDialog()
             elif nextline == "":
                 continue
             print(nextline.strip())
@@ -758,7 +936,7 @@ class MainWindow(QMainWindow):
             Depot = i
             try:
                 if Util.IsBundled():
-                    Destination = "."
+                    Destination = self.SteamPath
                 else:
                     Destination = "../Fallout 4"
                 if not os.path.isdir(Destination):
@@ -787,7 +965,7 @@ class MainWindow(QMainWindow):
         shutil.rmtree(self.SteamFiles)
 
 
-def main():
+def main(steampath=None):
     if not os.path.isdir("FOLON-Downgrader-Files"):
         os.mkdir("FOLON-Downgrader-Files")
     # else:
@@ -799,7 +977,11 @@ def main():
     CSSFile = Util.resource_path("FOLON.css")
     with open(CSSFile, "r") as fh:
         app.setStyleSheet(fh.read())
-    ex = MainWindow()
+    SetupFont()
+    if steampath != None:
+        ex = MainWindow(steampath)
+    else:
+        ex = MainWindow()
     # ex.setMinimumWidth(750)
     # ex.setMinimumHeight(575)
     # ex.setMaximumWidth(750)
@@ -833,7 +1015,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.path:
-        print(os.listdir(args.path))
-        main()
+        Settings = Util.Read_Settings()
+        Settings["Steps"] = 3
+        Util.Write_Settings(Settings)
+        main(args.path)
     else:
+        Settings = Util.Read_Settings()
+        Settings["Steps"] = 4
+        Util.Write_Settings(Settings)
         main()

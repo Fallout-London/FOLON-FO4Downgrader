@@ -6,8 +6,8 @@ To run this [get a binary from Releases](https://github.com/Fallout-London/FOLON
 Read the [build document](./Build.md)
 
 ## Thanks to
-Cornelius Rosenaa for making this
-Michel for testing on windows
-https://feathericons.com/ for icons
-Zerratar for reference FO4-Downgrader
+Cornelius Rosenaa for making this\
+Michel for testing on windows\
+https://feathericons.com/ for icons\
+Zerratar for reference FO4-Downgrader\
 Yousef Azizi for his PyQtLoadingscreen script

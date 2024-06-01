@@ -36,6 +36,11 @@ QProgressBar {
     border: 2px solid #c4c4c4;
     border-radius: 10px;
 }
+
+QProgressBar#DowngraderProgress {
+    color: white;
+}
+
 QProgressBar::chunk {
     border-radius: 7px;
     background-color: #c4c4c4;

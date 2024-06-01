@@ -107,7 +107,7 @@ def Read_Settings():
         # Closing file
         f.close()
     except:
-        settings = {"Username": "", "LoginResult": ""}
+        settings = {"Username": "", "LoginResult": "", "Steps": 4, "SteamPath": ""}
 
     return settings
 
