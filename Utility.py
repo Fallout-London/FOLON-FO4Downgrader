@@ -1,10 +1,3 @@
-def init():
-    global LoginResult
-    global Loading
-    InstallSteps = 2
-    Loading = False
-
-
 def WhereSteam():
     import os
     from pathlib import Path
@@ -107,7 +100,13 @@ def Read_Settings():
         # Closing file
         f.close()
     except:
-        settings = {"Username": "", "LoginResult": "", "Steps": 4, "SteamPath": ""}
+        settings = {
+            "Username": "",
+            "LoginResult": "",
+            "Steps": 4,
+            "SteamPath": "",
+            "DownloadStage": "1",
+        }
 
     return settings
 

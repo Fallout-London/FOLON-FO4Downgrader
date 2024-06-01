@@ -10,6 +10,8 @@ import argparse
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
 
+import time
+
 
 class Communicate(QObject):
     closeLoading = pyqtSignal()
@@ -19,11 +21,12 @@ class ScreenThread(LoadingThread):
     def __init__(
         self,
         Function,
+        ReadKey=None,
+        ProgressStr=None,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        print("Thread id", QThread.currentThread())
         self._Function = Function
 
     def run(self):
@@ -112,12 +115,14 @@ class MainWindow(QMainWindow):
         self,
         Function,
         text="Loading..",
+        ReadKey=None,
+        ProgressStr=None,
         PostFunction=None,
         Window=None,
         UseResult=False,
     ):
         self.__loadingTranslucentScreen = LoadingTranslucentScreen(
-            parent=self, description_text=text
+            parent=self, description_text=text, ReadKey=ReadKey, ProgressStr=ProgressStr
         )
         self.__thread = ScreenThread(
             Function,
@@ -247,6 +252,10 @@ class MainWindow(QMainWindow):
             print(f.read())
             f.close()
             os.remove(path + "/FOLON-Downgrader-TestFile")
+            Settings = Util.Read_Settings()
+            Settings["SteamPath"] = self.PathEntry.text()
+            Util.Write_Settings(Settings)
+            self.activate_tab_2()
         except:
             self.PathWrong3Dialog = QDialog(self)
             PathWrong3DialogLayout = QVBoxLayout()
@@ -746,7 +755,6 @@ class MainWindow(QMainWindow):
     def GuardSubmit(self):
         Settings = Util.Read_Settings()
         print(self.GuardEntry.text())
-        import subprocess
 
         if Util.IsWindows():
             p = subprocess.Popen(
@@ -776,6 +784,7 @@ class MainWindow(QMainWindow):
             )
         print(p.communicate()[0])
         if b"OK" in p.communicate()[0]:
+            self.GuardLogin = self.GuardEntry.text()
             Settings["LoginResult"] = "Success"
             Util.Write_Settings(Settings)
             self.LoginPopups()
@@ -851,11 +860,16 @@ class MainWindow(QMainWindow):
             self.SteamFiles = (
                 "FOLON-Downgrader-Files/SteamFiles/linux32/steamapps/content/app_377160"
             )
-        self.index = 0
         layout = QFormLayout()
 
-        SteamLabel = QLabel(text=str(Util.WhereSteam()))
-        layout.addRow(SteamLabel)
+        Header = QLabel("Downgrade Fallout 4")
+        Header.setFont(QFont("Overseer", 30))
+        layout.addRow(Header)
+        layout.addRow(
+            QLabel(
+                "<p>The following button can take quite a while, please <b>be patient</b>.</p>"
+            )
+        )
 
         InstallButton = QPushButton(
             text="Downgrade Fallout 4 (This will take a long time)"
@@ -868,15 +882,19 @@ class MainWindow(QMainWindow):
     def Load(self):
         self.Loading(
             lambda: time.sleep(5),
-            text=f"Moving depot[{self.index+1}/14]",
+            text=f"Moving depot",
+            ReadKey="DownloadStage",
+            ProgressStr="[KEY/14]",
             PostFunction=self.InstallInit,
         )
 
     def InstallInit(self):
         if not os.path.isdir(f"{self.SteamFiles}"):
             self.Loading(
-                lambda: self.Install(self.index),
-                text=f"Downloading depot[{self.index+1}/14]",
+                lambda: self.Install(),
+                text=f"Downloading depot",
+                ReadKey="DownloadStage",
+                ProgressStr="[KEY/14]",
                 PostFunction=self.InstallInit,
             )
         else:
@@ -885,7 +903,7 @@ class MainWindow(QMainWindow):
                 text=f"Moving depot",
             )
 
-    def Install(self, index):
+    def Install(self):
         Settings = Util.Read_Settings()
         if Util.IsWindows():
             command = [
@@ -893,8 +911,7 @@ class MainWindow(QMainWindow):
                 "+login",
                 f'{Settings["Username"]}',
                 f"{self.PasswordEntry.text()}",
-                "+force_install_dir",
-                "../csgo_ds",
+                f"{self.GuardLogin}",
                 "+runscript",
                 Util.resource_path("DownloadFallout4.txt"),
                 "+quit",
@@ -905,8 +922,7 @@ class MainWindow(QMainWindow):
                 "+login",
                 f'{Settings["Username"]}',
                 f"{self.PasswordEntry.text()}",
-                "+force_install_dir",
-                "../csgo_ds",
+                f"{self.GuardLogin}",
                 "+runscript",
                 Util.resource_path("DownloadFallout4.txt"),
                 "+quit",
@@ -919,13 +935,17 @@ class MainWindow(QMainWindow):
             stderr=subprocess.STDOUT,
         )
 
+        Settings = Util.Read_Settings()
         while InstallProcess.poll() is None:
             nextline = InstallProcess.stdout.readline()
             if b"Depot download complete" in nextline:
-                self.index += 1
-                if self.index < len(self.Depots):
+                Index = Settings["DownloadStage"]
+                Index += 1
+                Settings["DownloadStage"] = Index
+                Util.Write_Settings(Settings)
+                if int(Settings["DownloadStage"]) < 15:
                     print("Done")
-            elif b"Rate Limit Exceeded" in nextline:
+            if b"Rate Limit Exceeded" in nextline:
                 self.RateDialog()
             elif nextline == "":
                 continue
@@ -982,13 +1002,8 @@ def main(steampath=None):
         ex = MainWindow(steampath)
     else:
         ex = MainWindow()
-    # ex.setMinimumWidth(750)
-    # ex.setMinimumHeight(575)
-    # ex.setMaximumWidth(750)
-    # ex.setMaximumHeight(575)
     ex.show()
 
-    # Redirect stdout to a file
     sys.exit(app.exec())
 
 
