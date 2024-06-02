@@ -1,3 +1,8 @@
+def init():
+    global Loading
+    Loading = False
+
+
 def WhereSteam():
     import os
     from pathlib import Path
