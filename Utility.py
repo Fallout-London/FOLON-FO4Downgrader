@@ -87,8 +87,15 @@ def Write_Settings(settings):
 
     if not os.path.isdir("FOLON-Downgrader-Files"):
         os.mkdir("FOLON-Downgrader-Files")
+
     with open("FOLON-Downgrader-Files/Settings.json", "w") as f:
         json.dump(settings, f)
+
+    f = open("FOLON-Downgrader-Files/Settings.json")
+    LocalSettings = json.load(f)
+    f.close()
+    if settings != LocalSettings:
+        raise Exception("SETTINGS WRONG")
 
 
 def Read_Settings():
@@ -110,7 +117,6 @@ def Read_Settings():
             "LoginResult": "",
             "Steps": 4,
             "SteamPath": "",
-            "DownloadStage": "1",
         }
 
     return settings
