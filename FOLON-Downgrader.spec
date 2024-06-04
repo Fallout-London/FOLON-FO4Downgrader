@@ -5,7 +5,7 @@ a = Analysis(
     ["FOLON-Downgrader.py"],
     pathex=[],
     binaries=[],
-    datas=[("FOLON.css", "."), ("img/", "img/"), ("DownloadFallout4.txt", ".")],
+    datas=[("FOLON.css", "."), ("img/", "img/")],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

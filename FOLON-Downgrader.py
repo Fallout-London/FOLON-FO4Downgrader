@@ -6,7 +6,12 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
 import argparse
-import pexpect.popen_spawn
+
+if Util.IsWindows():
+    import pexpect.popen_spawn
+    import wexpect
+else:
+    import pexpect.popen_spawn
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
 
@@ -133,7 +138,7 @@ class MainWindow(QMainWindow):
     def activate_tab_4(self):  # GUI Backend
         self.TabIndex += 1
         self.stacklayout.setCurrentIndex(3)
-        self.InstallProgress.setFormat("Finis")
+        self.InstallProgress.setFormat("Bethesda, Bethesda Never Changes")
         self.InstallProgress.setValue(self.TabIndex)
 
     #########################################################################################
@@ -274,15 +279,10 @@ class MainWindow(QMainWindow):
 
     def WrongPathDialog3(self, path):  # GUI
         try:
-            f = open(path + "/FOLON-Downgrader-TestFile", "w")
-            f.write("Testing...")
-            f.close()
-            f = open(path + "/FOLON-Downgrader-TestFile", "r")
-            print(f.read())
-            f.close()
-            os.remove(path + "/FOLON-Downgrader-TestFile")
+            Util.IsWritable(path)
             Settings = Util.Read_Settings()
             Settings["SteamPath"] = self.PathEntry.text()
+            self.SteamPath = Settings["SteamPath"]
             Util.Write_Settings(Settings)
             self.activate_tab_2()
         except:
@@ -388,37 +388,54 @@ class MainWindow(QMainWindow):
         Password = self.Password
         Util.Write_Settings(Settings)
 
-        if Util.IsWindows():
-            if os.path.isfile("FOLON-Downgrader-Files/SteamFiles/steamcmd.exe"):
-                self.Steam = pexpect.popen_spawn.PopenSpawn(
-                    "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe",
-                    logfile=sys.stdout.buffer,
-                    timeout=60,
-                )
-        else:
-            if os.path.isfile("FOLON-Downgrader-Files/SteamFiles/steamcmd.sh"):
-                self.Steam = pexpect.popen_spawn.PopenSpawn(
-                    "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh",
-                    logfile=sys.stdout.buffer,
-                    timeout=60,
-                )
+        print(Util.IsWritable("FOLON-Downgrader-Files/SteamFiles"))
+        if Util.IsWritable("FOLON-Downgrader-Files/SteamFiles"):
+            if Util.IsWindows():
+                if os.path.isfile("FOLON-Downgrader-Files/SteamFiles/steamcmd.exe"):
+                    self.Steam = pexpect.popen_spawn.PopenSpawn(
+                        os.getcwd() + "/FOLON-Downgrader-Files/SteamFiles/steamcmd.exe",
+                        timeout=120,
+                    )
+                    self.Steam.logfile = sys.stdout.buffer
 
-        self.Steam.sendline(f'login "{Username}" "{Password}"\n')
+                    self.Steam.sendline(f'login "{Username}" "{Password}"\r\n')
+
+            else:
+                if os.path.isfile("FOLON-Downgrader-Files/SteamFiles/steamcmd.sh"):
+                    self.Steam = pexpect.popen_spawn.PopenSpawn(
+                        "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh",
+                        logfile=sys.stdout.buffer,
+                        timeout=120,
+                    )
+
+                    self.Steam.sendline(f'login "{Username}" "{Password}"\n')
 
         self.Wait()
 
     def Wait(self):
         print("Wait")
-        index = self.Steam.expect(
-            [
-                "Steam Public...OK",
-                "set_steam_guard_code",
-                "Steam Guard Mobile Authenticator app",
-                "Rate Limit",
-                "Invalid Password",
-                pexpect.TIMEOUT,
-            ],
-        )
+        if Util.IsWindows():
+            index = self.Steam.expect(
+                [
+                    "Steam Public...OK",
+                    "set_steam_guard_code",
+                    "Steam Guard Mobile Authenticator app",
+                    "Rate Limit",
+                    "Invalid Password",
+                    pexpect.TIMEOUT,
+                ],
+            )
+        else:
+            index = self.Steam.expect(
+                [
+                    "Steam Public...OK",
+                    "set_steam_guard_code",
+                    "Steam Guard Mobile Authenticator app",
+                    "Rate Limit",
+                    "Invalid Password",
+                    pexpect.TIMEOUT,
+                ],
+            )
         if index == 0:
             Settings["LoginResult"] = "Success"
             Util.Write_Settings(Settings)
@@ -748,13 +765,22 @@ class MainWindow(QMainWindow):
         )
 
         print("Wait 2 started")
-        index = self.Steam.expect(
-            [
-                "OK",
-                "Rate Limit",
-                pexpect.TIMEOUT,
-            ],
-        )
+        if Util.IsWindows():
+            index = self.Steam.expect(
+                [
+                    "OK",
+                    "Rate Limit",
+                    wexpect.TIMEOUT,
+                ],
+            )
+        else:
+            index = self.Steam.expect(
+                [
+                    "OK",
+                    "Rate Limit",
+                    pexpect.TIMEOUT,
+                ],
+            )
         if index == 0:
             Settings["LoginResult"] = "Success"
             Util.Write_Settings(Settings)
@@ -809,28 +835,29 @@ class MainWindow(QMainWindow):
         self.Depots = [
             # Main game
             [377162, 5847529232406005096],
-            [377161, 7497069378349273908],
-            [377163, 5819088023757897745],
-            [377164, 2178106366609958945],
-            # Wasteland W
-            [435880, 1255562923187931216],
-            # Automatron
-            [435870, 1691678129192680960],
-            [435871, 5106118861901111234],
-            # Contraptions W
-            [480630, 5527412439359349504],
-            # Far harbour
-            [435881, 1207717296920736193],
-            [435882, 8482181819175811242],
-            # Vault tec
-            [480631, 6588493486198824788],
-            [393885, 5000262035721758737],
-            # Nuka world
-            [490650, 4873048792354485093],
-            [393895, 7677765994120765493],
+            # [377161, 7497069378349273908],
+            # [377163, 5819088023757897745],
+            # [377164, 2178106366609958945],
+            # # Wasteland W
+            # [435880, 1255562923187931216],
+            # # Automatron
+            # [435870, 1691678129192680960],
+            # [435871, 5106118861901111234],
+            # # Contraptions W
+            # [480630, 5527412439359349504],
+            # # Far harbour
+            # [435881, 1207717296920736193],
+            # [435882, 8482181819175811242],
+            # # Vault tec
+            # [480631, 6588493486198824788],
+            # [393885, 5000262035721758737],
+            # # Nuka world
+            # [490650, 4873048792354485093],
+            # [393895, 7677765994120765493],
         ]
         print(len(self.Depots))
         self.DownloadIndex = 0
+        self.CopyIndex = 0
         if Util.IsWindows():
             self.SteamFiles = (
                 "FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"
@@ -866,22 +893,39 @@ class MainWindow(QMainWindow):
                 text=f"Downloading depot[{self.DownloadIndex+1}/{len(self.Depots)}]",
                 PostFunction=self.InstallInit,
             )
+        elif self.CopyIndex < len(self.Depots):
+            self.Loading(
+                lambda: self.CopyFiles(self.CopyIndex),
+                text=f"Moving depot[{self.CopyIndex+1}/{len(self.Depots)}]",
+                PostFunction=self.InstallInit,
+            )
+        else:
+            self.activate_tab_4()
 
     def Install(self, index):
+        self.Steam.timeout = None
         self.Steam.sendline(
             f"download_depot 377160 {self.Depots[index][0]} {self.Depots[index][1]}\n",
-            timeout=None,
         )
         self.Wait3()
 
     def Wait3(self):
-        index = self.Steam.expect(
-            [
-                "Depot download complete",
-                "Rate Limit",
-                pexpect.TIMEOUT,
-            ],
-        )
+        if Util.IsWindows():
+            index = self.Steam.expect(
+                [
+                    "Depot download complete",
+                    "Rate Limit",
+                    pexpect.TIMEOUT,
+                ],
+            )
+        else:
+            index = self.Steam.expect(
+                [
+                    "Depot download complete",
+                    "Rate Limit",
+                    pexpect.TIMEOUT,
+                ],
+            )
         if index == 0:
             self.DownloadIndex += 1
         elif index == 1:
@@ -901,38 +945,37 @@ class MainWindow(QMainWindow):
                 text=f"Moving depot",
             )
 
-    def CopyFiles(self):
-        for i in self.Depots:
-            Depot = i
-            try:
-                if Util.IsBundled():
-                    Destination = self.SteamPath
-                else:
-                    Destination = "../Fallout 4"
-                if not os.path.isdir(Destination):
-                    mkdir(Destination)
+    def CopyFiles(self, index):
+        Depot = self.Depots[index - 1]
+        try:
+            if Util.IsBundled():
+                Destination = self.SteamPath
+            else:
+                Destination = "../Fallout 4"
+            if not os.path.isdir(Destination):
+                mkdir(Destination)
 
-                print("Started Depot:", Depot[0])
-                for a in os.listdir(f"{self.SteamFiles}/depot_{Depot[0]}"):
-                    if os.path.isdir(f"{self.SteamFiles}/depot_{Depot[0]}/{a}"):
-                        for b in os.listdir(f"{self.SteamFiles}/depot_{Depot[0]}/{a}"):
-                            if not os.path.isdir(f"{Destination}/{a}"):
-                                os.mkdir(f"{Destination}/{a}")
-                            shutil.move(
-                                f"{self.SteamFiles}/depot_{Depot[0]}/{a}/{b}",
-                                f"{Destination}/{a}/{b}",
-                            )
-                    else:
+            print("Started Depot:", Depot[0])
+            for a in os.listdir(f"{self.SteamFiles}/depot_{Depot[0]}"):
+                if os.path.isdir(f"{self.SteamFiles}/depot_{Depot[0]}/{a}"):
+                    for b in os.listdir(f"{self.SteamFiles}/depot_{Depot[0]}/{a}"):
+                        if not os.path.isdir(f"{Destination}/{a}"):
+                            os.mkdir(f"{Destination}/{a}")
                         shutil.move(
-                            f"{self.SteamFiles}/depot_{Depot[0]}/{a}",
-                            f"{Destination}/{a}",
+                            f"{self.SteamFiles}/depot_{Depot[0]}/{a}/{b}",
+                            f"{Destination}/{a}/{b}",
                         )
-                    print("moved:", a)
-                shutil.rmtree(f"{self.SteamFiles}/depot_{Depot[0]}")
-                print("Finished Depot:", Depot)
-            except:
-                print("Skipped Depot:", Depot)
-        shutil.rmtree(self.SteamFiles)
+                else:
+                    shutil.move(
+                        f"{self.SteamFiles}/depot_{Depot[0]}/{a}",
+                        f"{Destination}/{a}",
+                    )
+                print("moved:", a)
+            shutil.rmtree(f"{self.SteamFiles}/depot_{Depot[0]}")
+            print("Finished Depot:", Depot)
+        except:
+            print("Skipped Depot:", Depot)
+        self.CopyIndex += 1
 
     ##########################################################################################
     # FINIS STAGE                                                                            #
@@ -944,11 +987,11 @@ class MainWindow(QMainWindow):
         Header = QLabel("Done Downgrading")
         Header.setFont(QFont("Overseer", 30))
         layout.addRow(Header)
-        layout.addRow(
-            QLabel(
-                "<p>The following button can take quite a while, please <b>be patient</b>.</p>"
-            )
-        )
+        # layout.addRow(
+        #     QLabel(
+        #         "<p>The following button can take quite a while, please <b>be patient</b>.</p>"
+        #     )
+        # )
 
         self.tab4.setLayout(layout)
 
@@ -960,7 +1003,6 @@ def main(steampath=None):
     # shutil.rmtree("FOLON-Downgrader-Files")
     # os.mkdir("FOLON-Downgrader-Files")
     shutil.copy(Util.resource_path("img/check.svg"), "FOLON-Downgrader-Files/")
-    shutil.copy(Util.resource_path("DownloadFallout4.txt"), "FOLON-Downgrader-Files/")
 
     app = QApplication(sys.argv)
     CSSFile = Util.resource_path("FOLON.css")

@@ -3,6 +3,22 @@ def init():
     Loading = False
 
 
+def IsWritable(path):
+    import os
+
+    try:
+        f = open(path + "/FOLON-Downgrader-TestFile", "w")
+        f.write("Testing...")
+        f.close()
+        f = open(path + "/FOLON-Downgrader-TestFile", "r")
+        f.read()
+        f.close()
+        os.remove(path + "/FOLON-Downgrader-TestFile")
+        return True
+    except:
+        return False
+
+
 def WhereSteam():
     import os
     from pathlib import Path
@@ -126,8 +142,10 @@ if __name__ == "__main__":
     print(WhereSteam())
     print(CountFiles("."))
     print(resource_path("."))
-    from os import listdir
+    from os import listdir, walk
 
     print(listdir(resource_path(".")))
+    for i in walk("."):
+        print(i, ": ", IsWritable(i))
     print(IsBundled())
     print(IsWindows())
