@@ -10,4 +10,4 @@ Cornelius Rosenaa for making this\
 Michel for testing on windows\
 https://feathericons.com/ for icons\
 Zerratar for reference FO4-Downgrader\
-Yousef Azizi for his PyQtLoadingscreen script
+yjg30737 for his PyQtLoadingscreen script
