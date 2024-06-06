@@ -28,24 +28,22 @@ def WhereSteam():
     SteamLocations = []
     steamfounds = 0
 
-    if os.path.isdir("C:/Program Files/Steam/"):
-        print("32 bit install")
+    if os.path.isdir("C:/Program Files/Steam/steamapps/common"):
         steamfounds += 1
-        SteamLocations.append("C:/Program Files/Steam/")
-    if os.path.isdir("C:/Program Files (x86)/Steam/steamapps/"):
-        print("64 bit install")
+        SteamLocations.append("C:/Program Files/Steam/steamapps/common")
+    if os.path.isdir("C:/Program Files (x86)/Steam/steamapps/steamapps/common"):
         steamfounds += 1
-        SteamLocations.append("C:/Program Files (x86)/Steam/")
-    if os.path.isdir(f"{home}/.var/app/com.valvesoftware.Steam/.local/share/Steam"):
-        print("Flatpak install")
+        SteamLocations.append("C:/Program Files (x86)/Steam/steamapps/common")
+    if os.path.isdir(
+        f"{home}/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common"
+    ):
         steamfounds += 1
         SteamLocations.append(
-            f"{home}/.var/app/com.valvesoftware.Steam/.local/share/Steam"
+            f"{home}/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common"
         )
-    if os.path.isdir(f"{home}/.steam/steam"):
-        print("Local install")
+    if os.path.isdir(f"{home}/.steam/steam/steamapps/common"):
         steamfounds += 1
-        SteamLocations.append(f"{home}/.steam/steam")
+        SteamLocations.append(f"{home}/.steam/steam/steamapps/common")
 
     if steamfounds == 0:
         return False
@@ -145,7 +143,5 @@ if __name__ == "__main__":
     from os import listdir, walk
 
     print(listdir(resource_path(".")))
-    for i in walk("."):
-        print(i, ": ", IsWritable(i))
     print(IsBundled())
     print(IsWindows())
