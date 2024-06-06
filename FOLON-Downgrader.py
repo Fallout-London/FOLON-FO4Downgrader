@@ -112,8 +112,6 @@ class MainWindow(QMainWindow):
         widget.setLayout(pagelayout)
         self.setCentralWidget(widget)
 
-        self.activate_tab_4()
-
         if steampath != None:
             self.SteamPath = steampath
             self.activate_tab_2()
