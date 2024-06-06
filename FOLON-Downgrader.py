@@ -111,6 +111,8 @@ class MainWindow(QMainWindow):
         widget.setLayout(pagelayout)
         self.setCentralWidget(widget)
 
+        # self.activate_tab_4()
+
         if steampath != None:
             self.SteamPath = steampath
             self.activate_tab_2()
@@ -303,7 +305,7 @@ class MainWindow(QMainWindow):
 
         self.LoginButton = QPushButton(text="Login to Steam")
         self.LoginButton.setEnabled(False)
-        self.LoginButton.pressed.connect(self.activate_tab_3)
+        self.LoginButton.pressed.connect(self.SteamSubmit)
 
         layout.addRow("Username:", self.UsernameEntry)
         layout.addRow("Password:", self.PasswordEntry)
@@ -649,24 +651,24 @@ class MainWindow(QMainWindow):
         self.Depots = [
             # Main game
             [377162, 5847529232406005096],
-            # [377161, 7497069378349273908],
-            # [377163, 5819088023757897745],
-            # [377164, 2178106366609958945],
+            [377161, 7497069378349273908],
+            [377163, 5819088023757897745],
+            [377164, 2178106366609958945],
             # # Wasteland W
-            # [435880, 1255562923187931216],
+            [435880, 1255562923187931216],
             # # Automatron
-            # [435870, 1691678129192680960],
-            # [435871, 5106118861901111234],
+            [435870, 1691678129192680960],
+            [435871, 5106118861901111234],
             # # Contraptions W
-            # [480630, 5527412439359349504],
+            [480630, 5527412439359349504],
             # # Far harbour
-            # [435881, 1207717296920736193],
-            # [435882, 8482181819175811242],
+            [435881, 1207717296920736193],
+            [435882, 8482181819175811242],
             # # Vault tec
-            # [480631, 6588493486198824788],
+            [480631, 6588493486198824788],
             [393885, 5000262035721758737],
             # # Nuka world
-            # [490650, 4873048792354485093],
+            [490650, 4873048792354485093],
             [393895, 7677765994120765493],
         ]
         print(len(self.Depots))
@@ -749,7 +751,7 @@ class MainWindow(QMainWindow):
         )
         layout.addItem(TextLayout)
 
-        icon = QIcon("img/FOLON256.png")
+        icon = QIcon(Util.resource_path("img/FOLON256.png"))
         self.DiscordButton = QPushButton()
         self.DiscordButton.setIcon(icon)
         self.DiscordButton.setIconSize(QSize(200, 200))
@@ -775,16 +777,14 @@ class MainWindow(QMainWindow):
 
     def Finish(self):
         print("Done")
-        shutil.rmtree("FOLON-Downgrader-Files")
-        try:
-            shutil.rmtree(self.SteamPath + "/.DepotDownloader")
-        except:
-            pass
-        try:
-            shutil.rmtree("__pycache__")
-        except:
-            pass
         self.close()
+        print(sys.argv)
+        if Util.IsBundled():
+            os.execv(sys.executable, sys.argv + ["--clean", self.SteamPath])
+        else:
+            os.execv(
+                sys.executable, ["python"] + sys.argv + ["--clean", self.SteamPath]
+            )
 
 
 def main(steampath=None):
@@ -826,9 +826,18 @@ if __name__ == "__main__":
         type=directory,
         help="Path to steam(The directory containing a SteamApps folder)",
     )
+    parser.add_argument(
+        "-c",
+        "--clean",
+        required=False,
+        metavar="",
+        help="Clean directory, takes over everything else.",
+    )
     args = parser.parse_args()
 
-    if args.path:
+    if args.clean:
+        Util.CleanUp(args.clean)
+    elif args.path:
         Settings = Util.Read_Settings()
         Settings["Steps"] = 3
         Util.Write_Settings(Settings)

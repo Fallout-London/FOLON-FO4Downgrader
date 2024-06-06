@@ -136,6 +136,33 @@ def Read_Settings():
     return settings
 
 
+def CleanUp(Path):
+    import shutil
+    from time import sleep
+
+    sleep(10)
+    shutil.rmtree("FOLON-Downgrader-Files")
+    try:
+        shutil.rmtree(Path + "/.DepotDownloader")
+    except:
+        pass
+    try:
+        shutil.rmtree("__pycache__")
+    except:
+        pass
+    BlockUpdates()
+
+
+def BlockUpdates():
+    for i in WhereSteam():
+        try:
+            FilePath = i.replace("/common", "/appmanifest_377160.acf")
+            print(FilePath)
+            os.chmod(FilePath, stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
+        except:
+            pass
+
+
 if __name__ == "__main__":
     print(WhereSteam())
     print(CountFiles("."))
