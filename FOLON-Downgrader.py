@@ -6,9 +6,8 @@ import Utility as Util
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
+from QLines import *
 import argparse
-
-import subprocess
 import pexpect.popen_spawn
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
@@ -216,7 +215,7 @@ class MainWindow(QMainWindow):
             self.PathSubmit.setEnabled(True)
 
     def GetDirectory(self):  # GUI Backend
-        if len(Util.WhereSteam()) > 0:
+        if not Util.WhereSteam() == False:
             folderpath = QFileDialog.getExistingDirectory(
                 self,
                 "Select Folder",
@@ -374,8 +373,7 @@ class MainWindow(QMainWindow):
 
         if os.path.isfile(self.DepotDownloader):
             self.Steam = pexpect.popen_spawn.PopenSpawn(
-                f'{self.DepotDownloader} -username "{self.Username}" -password "{self.Password}" -remember-password -app 377160 -depot 377162',
-                logfile=sys.stdout.buffer,
+                f'{self.DepotDownloader} -username "{self.Username}" -password "{self.Password}" -remember-password -app 377160 -depot 377162 -dir FOLON-Downgrader-Files/SteamFiles',
                 timeout=120,
             )
 
@@ -708,7 +706,6 @@ class MainWindow(QMainWindow):
         self.Steam.timeout = None
         self.Steam = pexpect.popen_spawn.PopenSpawn(
             f'{self.DepotDownloader} -username "{self.Username}" -password "{self.Password}" -remember-password -app 377160 -depot {self.Depots[index][0]} -manifest "{self.Depots[index][1]}" -dir "{self.SteamPath}"',
-            logfile=sys.stdout.buffer,
             timeout=120,
         )
         self.Wait3()
@@ -763,7 +760,11 @@ class MainWindow(QMainWindow):
         self.FinisButton.pressed.connect(self.Finish)
 
         layout.addWidget(self.DiscordButton, 0, 1, 1, 1)
-        layout.addWidget(self.FinisButton, 1, 0, 1, 2)
+
+        separator_horizontal = QHSeparationLine()
+        layout.addWidget(separator_horizontal, 1, 0, 1, 2)
+        layout.addWidget(QLabel("<p>Developed by Cornelius Rosenaa</p>"), 2, 0, 1, 1)
+        layout.addWidget(self.FinisButton, 2, 1, 1, 1)
 
         self.tab4.setLayout(layout)
 
@@ -775,7 +776,10 @@ class MainWindow(QMainWindow):
     def Finish(self):
         print("Done")
         shutil.rmtree("FOLON-Downgrader-Files")
-        shutil.rmtree(self.SteamPath + "/.DepotDownloader")
+        try:
+            shutil.rmtree(self.SteamPath + "/.DepotDownloader")
+        except:
+            pass
         try:
             shutil.rmtree("__pycache__")
         except:
@@ -786,9 +790,6 @@ class MainWindow(QMainWindow):
 def main(steampath=None):
     if not os.path.isdir("FOLON-Downgrader-Files"):
         os.mkdir("FOLON-Downgrader-Files")
-    # else:
-    # shutil.rmtree("FOLON-Downgrader-Files")
-    # os.mkdir("FOLON-Downgrader-Files")
     shutil.copy(Util.resource_path("img/check.svg"), "FOLON-Downgrader-Files/")
 
     app = QApplication(sys.argv)

@@ -31,7 +31,7 @@ def WhereSteam():
     if os.path.isdir("C:/Program Files/Steam/steamapps/common"):
         steamfounds += 1
         SteamLocations.append("C:/Program Files/Steam/steamapps/common")
-    if os.path.isdir("C:/Program Files (x86)/Steam/steamapps/steamapps/common"):
+    if os.path.isdir("C:/Program Files (x86)/Steam/steamapps/common"):
         steamfounds += 1
         SteamLocations.append("C:/Program Files (x86)/Steam/steamapps/common")
     if os.path.isdir(
