@@ -23,7 +23,7 @@ QPushButton{
 QLineEdit::placeholder {
     color: grey;
 }
-QPushButton::Hover, QCheckBox::indicator::Hover,QPushButton::Focus, QCheckBox::indicator::Focus {
+QPushButton::Hover, QCheckBox::indicator::Hover {
     background-color: grey;
 }
 
