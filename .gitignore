@@ -5,6 +5,7 @@
 *__pycache__*
 /.venv
 /FOLON-Downgrader-Files
+/depots
 .fuse_hidden*
 test.py
 *.zip
