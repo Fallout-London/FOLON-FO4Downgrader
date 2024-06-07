@@ -127,7 +127,6 @@ def Read_Settings():
         f.close()
     except:
         settings = {
-            "Username": "",
             "LoginResult": "",
             "Steps": 4,
             "SteamPath": "",
@@ -140,8 +139,6 @@ def CleanUp(Path):
     import shutil
     from time import sleep
 
-    sleep(10)
-    shutil.rmtree("FOLON-Downgrader-Files")
     try:
         shutil.rmtree(Path + "/.DepotDownloader")
     except:
