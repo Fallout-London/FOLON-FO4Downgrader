@@ -21,8 +21,6 @@ class ScreenThread(LoadingThread):
     def __init__(
         self,
         Function,
-        ReadKey=None,
-        ProgressStr=None,
         *args,
         **kwargs,
     ):
@@ -112,25 +110,28 @@ class MainWindow(QMainWindow):
 
         # self.activate_tab_4()
 
+        ArguemntPath = False
         if steampath != None:
+            ArguemntPath = True
             self.SteamPath = steampath
+
             self.activate_tab_2()
 
     def activate_tab_2(self):  # GUI Backend
-        self.TabIndex += 1
+        self.TabIndex = 2
         self.stacklayout.setCurrentIndex(1)
         self.InstallProgress.setFormat("Login to Steam")
         self.InstallProgress.setValue(self.TabIndex)
 
     def activate_tab_3(self):  # GUI Backend
         if self.FinishedLogging:
-            self.TabIndex += 1
+            self.TabIndex = 3
             self.stacklayout.setCurrentIndex(2)
             self.InstallProgress.setFormat("Downgrade Fallout 4")
             self.InstallProgress.setValue(self.TabIndex)
 
     def activate_tab_4(self):  # GUI Backend
-        self.TabIndex += 1
+        self.TabIndex = 4
         self.stacklayout.setCurrentIndex(3)
         self.InstallProgress.setFormat("Bethesda, Bethesda Never Changes")
         self.InstallProgress.setValue(self.TabIndex)
@@ -143,14 +144,12 @@ class MainWindow(QMainWindow):
         self,
         Function,
         text="Loading..",
-        ReadKey=None,
-        ProgressStr=None,
         PostFunction=None,
         Window=None,
         UseResult=False,
     ):
         self.__loadingTranslucentScreen = LoadingTranslucentScreen(
-            parent=self, description_text=text, ReadKey=ReadKey, ProgressStr=ProgressStr
+            parent=self, description_text=text
         )
         self.__thread = ScreenThread(
             Function,
@@ -248,11 +247,27 @@ class MainWindow(QMainWindow):
 
     def WrongPathDialog2(self, path):  # GUI Backend
         if Util.IsWritable(path):
-            Settings = Util.Read_Settings()
-            Settings["SteamPath"] = self.PathEntry.text()
-            self.SteamPath = Settings["SteamPath"]
-            Util.Write_Settings(Settings)
-            self.activate_tab_2()
+            if "Fallout4.exe" in os.listdir(path):
+                Settings = Util.Read_Settings()
+                Settings["SteamPath"] = self.PathEntry.text()
+                self.SteamPath = Settings["SteamPath"]
+                Util.Write_Settings(Settings)
+                self.activate_tab_2()
+            else:
+                self.PathWrong2Dialog = QDialog(self)
+                PathWrong2DialogLayout = QVBoxLayout()
+                PathWrong2DialogLayout.addWidget(
+                    QLabel("Folder does not contain Fallout4.exe")
+                )
+                PathWrong2DialogLayout.addWidget(
+                    QLabel("Please choose a valid Fallout 4 folder")
+                )
+                ReturnButton = QPushButton(text="Return")
+                ReturnButton.pressed.connect(lambda: self.PathWrong2Dialog.close())
+                PathWrong2DialogLayout.addWidget(ReturnButton)
+
+                self.PathWrong2Dialog.setLayout(PathWrong2DialogLayout)
+                self.PathWrong2Dialog.exec()
         else:
             self.PathWrong3Dialog = QDialog(self)
             PathWrong3DialogLayout = QVBoxLayout()
@@ -430,6 +445,7 @@ class MainWindow(QMainWindow):
         )
 
         self.GuardEntry = QLineEdit()
+        self.GuardEntry.setMaxLength(5)
         self.GuardButton = QPushButton(text="Submit")
         self.GuardButton.pressed.connect(self.GuardSubmitInit)
 
@@ -471,6 +487,10 @@ class MainWindow(QMainWindow):
             1,
             2,
         )
+
+        GuardButton = QPushButton(text="Submit")
+        GuardButton.pressed.connect(self.LoginSteam)
+        SteamGDlgLayout.addRow(GuardButton)
 
         GuardLabel = QLabel("<p>Steam guard code:</p>")
         GuardLabel.setObjectName("Guard2Label")
@@ -570,6 +590,7 @@ class MainWindow(QMainWindow):
         index = self.Steam.expect(
             [
                 "Done!",
+                "incorrect",
                 "RateLimitExceeded",
                 "Steam Failed",
                 pexpect.TIMEOUT,
@@ -579,11 +600,14 @@ class MainWindow(QMainWindow):
             Settings["LoginResult"] = "Success"
             Util.Write_Settings(Settings)
         elif index == 1:
-            Settings["LoginResult"] = "Rate"
+            Settings["LoginResult"] = "Guard"
             Util.Write_Settings(Settings)
         elif index == 2:
-            self.GuardSubmit()
+            Settings["LoginResult"] = "Rate"
+            Util.Write_Settings(Settings)
         elif index == 3:
+            self.GuardSubmit()
+        elif index == 4:
             Settings["LoginResult"] = "Rate"
             Util.Write_Settings(Settings)
         print("Wait 2 ended")
@@ -634,26 +658,15 @@ class MainWindow(QMainWindow):
             [377162, 5847529232406005096],
             [377163, 5819088023757897745],
             [377164, 2178106366609958945],
+            # Workshops
+            [435880, 1255562923187931216],
             # Automatron
             [435870, 1691678129192680960],
             [435871, 5106118861901111234],
-            # Wasteland W
-            [435880, 1255562923187931216],
-            # Far Harbor
-            [435881, 1207717296920736193],
-            [435882, 8482181819175811242],
-            # Contraptions w
-            [480630, 5527412439359349504],
-            # Vault tec
-            [480631, 6588493486198824788],
-            [393885, 5000262035721758737],
-            # Nuka world
-            [490650, 4873048792354485093],
-            [393895, 7677765994120765493],
         ]
         self.DownloadIndex = 0
         self.SteamFiles = "FOLON-Downgrader-Files/SteamFiles/depots"
-        self.Downloaded = False
+        self.Downloaded = 0
         layout = QFormLayout()
 
         Header = QLabel("Downgrade Fallout 4")
@@ -680,19 +693,19 @@ class MainWindow(QMainWindow):
                 text=f"Downloading depot[{self.DownloadIndex+1}/{len(self.Depots)}]",
                 PostFunction=self.InstallInit,
             )
-        elif self.downloaded:
+        elif self.Downloaded == 1:
             self.Loading(
-                lambda: self.Install(self.DownloadIndex),
-                text=f"Validating depot[{self.DownloadIndex+1}/{len(self.Depots)}]",
+                self.RemoveCC,
+                text=f"Removing Creation Club content",
                 PostFunction=self.InstallInit,
             )
-        else:
+        elif self.Downloaded == 2:
             self.activate_tab_4()
 
     def Install(self, index):
         self.Steam.timeout = None
         self.Steam = pexpect.popen_spawn.PopenSpawn(
-            f'{self.DepotDownloader} -username "{self.Username}" -password "{self.Password}" -remember-password -app 377160 -depot {self.Depots[index][0]} -manifest "{self.Depots[index][1]}" -dir "{self.SteamPath}"',
+            f'{self.DepotDownloader} -username "{self.Username}" -password "{self.Password}" -remember-password -app 377160 -depot {self.Depots[index][0]} -manifest "{self.Depots[index][1]}" -dir "{self.SteamPath}" -validate',
             logfile=sys.stdout.buffer,
             timeout=None,
         )
@@ -708,13 +721,20 @@ class MainWindow(QMainWindow):
         )
         if index == 0:
             self.DownloadIndex += 1
-            self.Downloaded = True
+            if self.DownloadIndex == len(self.Depots):
+                self.Downloaded += 1
         elif index == 1:
             Settings["InstallResult"] = "Rate"
             Util.Write_Settings(Settings)
         elif index == 2:
             Settings["InstallResult"] = "Rate"
             Util.Write_Settings(Settings)
+
+    def RemoveCC(self):
+        for i in os.listdir(self.SteamPath + "/data"):
+            if i[:2] == "cc":
+                os.remove(self.SteamPath + "/data/" + i)
+        self.Downloaded += 1
 
     ##########################################################################################
     # FINIS STAGE                                                                            #

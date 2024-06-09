@@ -11,16 +11,13 @@ class LoadingTranslucentScreen(QWidget):
         self,
         parent: QWidget,
         description_text: str = "",
-        ReadKey=None,
-        ProgressStr=None,
+        SlowRoll: bool = False,
         dot_animation: bool = True,
     ):
         super().__init__(parent)
         self.__parent = parent
         self.__parent.installEventFilter(self)
         self.__parent.resizeEvent = self.resizeEvent
-        self.__ReadKey = ReadKey
-        self.__ProgressStr = ProgressStr
 
         self.__dot_animation_flag = dot_animation
 
@@ -76,21 +73,15 @@ class LoadingTranslucentScreen(QWidget):
         dot = "."
         cur_text = self.__descriptionLbl.text()
         cnt = cur_text.count(dot)
-        if self.__ReadKey == None or self.__ProgressStr == None:
-            if cnt % 3 == 0 and cnt != 0:
-                self.__descriptionLbl.setText(self.__descriptionLbl_original_text + dot)
-            else:
-                self.__descriptionLbl.setText(cur_text + dot)
+        Settings = Util.Read_Settings()
+        if cnt % 3 == 0 and cnt != 0:
+            self.__descriptionLbl.setText(
+                self.__descriptionLbl_original_text
+                + self.__ProgressStr.replace("KEY", Settings[self.__ReadKey])
+                + dot
+            )
         else:
-            Settings = Util.Read_Settings()
-            if cnt % 3 == 0 and cnt != 0:
-                self.__descriptionLbl.setText(
-                    self.__descriptionLbl_original_text
-                    + self.__ProgressStr.replace("KEY", Settings[self.__ReadKey])
-                    + dot
-                )
-            else:
-                self.__descriptionLbl.setText(cur_text + dot)
+            self.__descriptionLbl.setText(cur_text + dot)
 
     def setParentThread(self, parent_thread: QThread):
         self.__thread = parent_thread
