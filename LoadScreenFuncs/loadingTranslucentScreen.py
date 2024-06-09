@@ -75,11 +75,7 @@ class LoadingTranslucentScreen(QWidget):
         cnt = cur_text.count(dot)
         Settings = Util.Read_Settings()
         if cnt % 3 == 0 and cnt != 0:
-            self.__descriptionLbl.setText(
-                self.__descriptionLbl_original_text
-                + self.__ProgressStr.replace("KEY", Settings[self.__ReadKey])
-                + dot
-            )
+            self.__descriptionLbl.setText(self.__descriptionLbl_original_text + dot)
         else:
             self.__descriptionLbl.setText(cur_text + dot)
 

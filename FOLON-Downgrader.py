@@ -490,7 +490,13 @@ class MainWindow(QMainWindow):
 
         GuardButton = QPushButton(text="Submit")
         GuardButton.pressed.connect(self.LoginSteam)
-        SteamGDlgLayout.addRow(GuardButton)
+        SteamGDlgLayout.addWidget(
+            GuardButton,
+            2,
+            0,
+            1,
+            2,
+        )
 
         GuardLabel = QLabel("<p>Steam guard code:</p>")
         GuardLabel.setObjectName("Guard2Label")
