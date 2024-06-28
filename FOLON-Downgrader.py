@@ -198,6 +198,7 @@ class MainWindow(QMainWindow):
 
         self.PathButton = QPushButton()
         self.PathButton.setIcon(QIcon(Util.resource_path("img/folder.svg")))
+        self.PathButton.setObjectName("PathButton")
         self.PathButton.pressed.connect(self.GetDirectory)
 
         hbox.addWidget(self.PathEntry)
@@ -479,6 +480,12 @@ class MainWindow(QMainWindow):
         labelbox1.addWidget(
             QLabel("<p>Please open your steam app and authorise your login</p>")
         )
+        labelbox1.addWidget(
+            QLabel("<p>Also make sure the capitalization</p>")
+        )
+        labelbox1.addWidget(
+            QLabel("<p>of your username and password are correct</p>")
+        )
 
         SteamGDlgLayout.addItem(
             labelbox1,
@@ -506,8 +513,6 @@ class MainWindow(QMainWindow):
         self.GuardEntry.setPlaceholderText("Steam guard code")
         self.GuardEntry.setFocus(True)
 
-        # SteamGDlgLayout.addWidget(GuardLabel, 3, 0)
-        # SteamGDlgLayout.addItem(LineBox, 3, 0, 1, 2)
         self.SteamGDlg.setWindowTitle("Steam Guard Dialog")
         self.SteamGDlg.setLayout(SteamGDlgLayout)
         self.GuardEntry.setFocus()
