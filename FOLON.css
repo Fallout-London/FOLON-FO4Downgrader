@@ -1,7 +1,12 @@
 QWidget {
-    font: "Arial";
-    background-color: #222222;
     padding: 5px;
+    background-color: rgba(0,0,0,0);
+}
+#centralWidget {
+    background-color: #222222;
+    background-image: url("img/FOLONBackground.png");
+    background-repeat: no-repeat;
+    background-position: center;
 }
 QWidget:enabled {
     color: #ddd4ea;
@@ -19,7 +24,7 @@ QLineEdit:disabled, QPushButton:disabled {
     border: 2px solid #3c215e;
 }
 QLineEdit:enabled {
-    background-color: #111111;
+    /*background-color: #111111;*/
     border-radius: 5px;
 }
 QPushButton{

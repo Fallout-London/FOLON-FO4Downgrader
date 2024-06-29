@@ -67,6 +67,9 @@ def SetupSteam():
 class MainWindow(QMainWindow):
     def __init__(self, steampath=None):
         super().__init__()
+        self.centralWidget = QWidget()
+        self.centralWidget.setObjectName("centralWidget")
+
         self.TabIndex = 1
         Settings = Util.Read_Settings()
         self.setWindowTitle("FOLON Fallout 4 downgrader")
@@ -81,18 +84,22 @@ class MainWindow(QMainWindow):
         pagelayout.addLayout(self.stacklayout)
 
         self.tab1 = QWidget()
+        self.tab1.setObjectName("Tab")
         self.stacklayout.addWidget(self.tab1)
         self.tab1UI()
 
         self.tab2 = QWidget()
+        self.tab2.setObjectName("Tab")
         self.stacklayout.addWidget(self.tab2)
         self.tab2UI()
 
         self.tab3 = QWidget()
+        self.tab3.setObjectName("Tab")
         self.stacklayout.addWidget(self.tab3)
         self.tab3UI()
 
         self.tab4 = QWidget()
+        self.tab4.setObjectName("Tab")
         self.stacklayout.addWidget(self.tab4)
         self.tab4UI()
 
@@ -104,9 +111,8 @@ class MainWindow(QMainWindow):
 
         button_layout.addWidget(self.InstallProgress)
 
-        widget = QWidget()
-        widget.setLayout(pagelayout)
-        self.setCentralWidget(widget)
+        self.centralWidget.setLayout(pagelayout)
+        self.setCentralWidget(self.centralWidget)
 
         # self.activate_tab_4()
 
@@ -480,12 +486,8 @@ class MainWindow(QMainWindow):
         labelbox1.addWidget(
             QLabel("<p>Please open your steam app and authorise your login</p>")
         )
-        labelbox1.addWidget(
-            QLabel("<p>Also make sure the capitalization</p>")
-        )
-        labelbox1.addWidget(
-            QLabel("<p>of your username and password are correct</p>")
-        )
+        labelbox1.addWidget(QLabel("<p>Also make sure the capitalization</p>"))
+        labelbox1.addWidget(QLabel("<p>of your username and password are correct</p>"))
 
         SteamGDlgLayout.addItem(
             labelbox1,
@@ -573,11 +575,9 @@ class MainWindow(QMainWindow):
         self.SteamPDlg = QDialog(self)
         self.SteamPDlgLayout = QFormLayout()
 
-        self.SteamPDlgLayout.addRow(QLabel("<h3>Incorrect Password.</h3>"))
-        self.SteamPDlgLayout.addRow(QLabel("<p>Please re-enter the password.</p>"))
-        self.SteamPDlgLayout.addRow(
-            QLabel("<p>Remember to <b>check</b> if it is correct.</p>")
-        )
+        self.SteamPDlgLayout.addRow(QLabel("<h3>Incorrect Auth.</h3>"))
+        self.SteamPDlgLayout.addRow(QLabel("<p>Please check if your username.</p>"))
+        self.SteamPDlgLayout.addRow(QLabel("<p>and password are correct</p>"))
         self.SteamPDlg.setWindowTitle("Steam Password Dialog")
         self.SteamPDlg.setLayout(self.SteamPDlgLayout)
         self.SteamPDlg.exec()
