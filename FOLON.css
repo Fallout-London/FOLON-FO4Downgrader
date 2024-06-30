@@ -4,7 +4,7 @@ QWidget {
 }
 #centralWidget {
     background-color: #222222;
-    background-image: url("img/FOLONBackground.png");
+    background-image: url("FOLON-Downgrader-Files/FOLONBackground.png");
     background-repeat: no-repeat;
     background-position: center;
 }

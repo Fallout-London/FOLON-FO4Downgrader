@@ -86,7 +86,9 @@ class MainWindow(QMainWindow):
         pagelayout.addLayout(bottom_layout)
 
         self.SubmitButton = QPushButton(text="Continue")
-        self.SubmitButton.resize(self.SubmitButton.sizeHint().width(), self.SubmitButton.sizeHint().height())
+        self.SubmitButton.resize(
+            self.SubmitButton.sizeHint().width(), self.SubmitButton.sizeHint().height()
+        )
         self.SubmitButton.pressed.connect(self.ContinueAction)
 
         bottom_layout.addWidget(QLabel("<small>Developed by Cornelius Rosenaa</small>"))
@@ -822,6 +824,9 @@ def main(steampath=None):
     if not os.path.isdir("FOLON-Downgrader-Files"):
         os.mkdir("FOLON-Downgrader-Files")
     shutil.copy(Util.resource_path("img/check.svg"), "FOLON-Downgrader-Files/")
+    shutil.copy(
+        Util.resource_path("img/FOLONBackground.png"), "FOLON-Downgrader-Files/"
+    )
 
     app = QApplication(sys.argv)
     CSSFile = Util.resource_path("FOLON.css")
