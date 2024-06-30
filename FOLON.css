@@ -11,28 +11,34 @@ QWidget {
 QWidget:enabled {
     color: #ddd4ea;
 }
-QLineEdit:enabled {
-    border: 2px solid #a380d2;
-}
 QPushButton:enabled {
     color: #ddd4ea;
     background-color: #a380d2;
 }
-
+QWidget#TextBox {
+    border-bottom: 2px solid #a380d2;
+}
+QWidget#InsideTextBox {
+    margin: 0;
+    padding: 0px;
+}
 QLineEdit:disabled, QPushButton:disabled {
     color: #3c215e;
     border: 2px solid #3c215e;
 }
 QLineEdit:enabled {
     /*background-color: #111111;*/
-    border-radius: 5px;
+    border-radius: 0;
 }
 QPushButton{
     border-radius: 5%;
 }
 QPushButton#PathButton{
+    padding: 0;
+    margin: 0;
     width: 30%;
     height: 30%;
+    background: none;
 }
 QLineEdit::placeholder {
     color: grey;
