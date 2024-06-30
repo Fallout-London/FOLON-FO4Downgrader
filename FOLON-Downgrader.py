@@ -790,6 +790,7 @@ class MainWindow(QMainWindow):
 
         icon = QIcon(Util.resource_path("img/FOLON256.png"))
         self.DiscordButton = QPushButton()
+        self.DiscordButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.DiscordButton.setIcon(icon)
         self.DiscordButton.setIconSize(QSize(200, 200))
 

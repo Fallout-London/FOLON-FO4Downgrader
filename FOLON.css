@@ -46,17 +46,14 @@ QLineEdit::placeholder {
 QPushButton::Hover, QCheckBox::indicator::Hover {
     background-color: #a887d5;
 }
-
 QLabel#ImageLabel ,QPixmap{
     border-radius: 50px;
 }
-
 QProgressBar {
     qproperty-alignment: AlignCenter;
     border: 2px solid #a380d2;
     border-radius: 5%;
 }
-
 QProgressBar::chunk {
     border-radius: 5%;
     background-color: #a380d2;
