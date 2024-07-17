@@ -5,7 +5,7 @@ On linux This requires qt to be installed, how it is installed depends on your d
 To run this [get a binary from Releases](https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/latest) for your OS.
 
 ## To build
-Read the [build document](./Build.md)
+Read the [build document](./build.md)
 
 ## Thanks to
 Cornelius Rosenaa for making this\
