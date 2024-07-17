@@ -1,60 +1,72 @@
 QWidget {
-    font: "Open Sans";
-    background-color: #222222;
     padding: 5px;
+    background-color: rgba(0,0,0,0);
+}
+#centralWidget {
+    background-color: #222222;
+    background-image: url("FOLON-Downgrader-Files/FOLONBackground.png");
+    background-repeat: no-repeat;
+    background-position: center;
 }
 QWidget:enabled {
-    color: #c4c4c4;
+    color: #ddd4ea;
 }
-QLineEdit:enabled, QPushButton:enabled {
-    border: 2px solid #c4c4c4;
+QPushButton:enabled {
+    color: #ddd4ea;
+    background-color: #a380d2;
+}
+QWidget#TextBox {
+    border-bottom: 2px solid #a380d2;
+}
+QWidget#InsideTextBox {
+    margin: 0;
+    padding: 0px;
 }
 QLineEdit:disabled, QPushButton:disabled {
-    color: #666666;
-    border: 2px solid #666666;
+    color: #3c215e;
+    border: 2px solid #3c215e;
 }
 QLineEdit:enabled {
-    background-color: #111111;
-    border-radius: 5px;
+    /*background-color: #111111;*/
+    border-radius: 0;
 }
 QPushButton{
-    border-radius: 10px;
+    border-radius: 5%;
+}
+QPushButton#PathButton{
+    padding: 0;
+    margin: 0;
+    width: 30%;
+    height: 30%;
+    background: none;
 }
 QLineEdit::placeholder {
     color: grey;
 }
 QPushButton::Hover, QCheckBox::indicator::Hover {
-    background-color: grey;
+    background-color: #a887d5;
 }
-
 QLabel#ImageLabel ,QPixmap{
     border-radius: 50px;
 }
-
 QProgressBar {
     qproperty-alignment: AlignCenter;
-    border: 2px solid #c4c4c4;
-    border-radius: 10px;
+    border: 2px solid #a380d2;
+    border-radius: 5%;
 }
-
-QProgressBar#DowngraderProgress {
-    color: white;
-}
-
 QProgressBar::chunk {
-    border-radius: 7px;
-    background-color: #c4c4c4;
+    border-radius: 5%;
+    background-color: #a380d2;
 }
 QCheckBox {
     background-color: none;
     border: none;
 }
 QCheckBox::indicator {
-    width: 15px;
-    height: 15px;
-    background-color: #222222;
-    border: 2px solid #c4c4c4;
-    border-radius: 10px;
+    width: 30%;
+    height: 30%;
+    background-color: #a380d2;
+    border-radius: 4%;
 }
 QCheckBox::indicator::Checked {
     image: url("FOLON-Downgrader-Files/check.svg");

@@ -1,5 +1,7 @@
 # FOLON's Fallout 4 Downgrader
 
+On linux This requires qt to be installed, how it is installed depends on your distro, but it should work on windows out of the box.
+
 To run this [get a binary from Releases](https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/latest) for your OS.
 
 ## To build

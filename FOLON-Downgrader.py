@@ -67,6 +67,9 @@ def SetupSteam():
 class MainWindow(QMainWindow):
     def __init__(self, steampath=None):
         super().__init__()
+        self.centralWidget = QWidget()
+        self.centralWidget.setObjectName("centralWidget")
+
         self.TabIndex = 1
         Settings = Util.Read_Settings()
         self.setWindowTitle("FOLON Fallout 4 downgrader")
@@ -74,25 +77,41 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(FOLONIcon)
 
         pagelayout = QVBoxLayout()
-        button_layout = QHBoxLayout()
+        top_layout = QHBoxLayout()
+        bottom_layout = QHBoxLayout()
         self.stacklayout = QStackedLayout()
 
-        pagelayout.addLayout(button_layout)
+        pagelayout.addLayout(top_layout)
         pagelayout.addLayout(self.stacklayout)
+        pagelayout.addLayout(bottom_layout)
+
+        self.SubmitButton = QPushButton(text="Continue")
+        self.SubmitButton.resize(
+            self.SubmitButton.sizeHint().width(), self.SubmitButton.sizeHint().height()
+        )
+        self.SubmitButton.pressed.connect(self.ContinueAction)
+
+        bottom_layout.addWidget(QLabel("<small>Developed by Cornelius Rosenaa</small>"))
+        bottom_layout.addStretch()
+        bottom_layout.addWidget(self.SubmitButton)
 
         self.tab1 = QWidget()
+        self.tab1.setObjectName("Tab")
         self.stacklayout.addWidget(self.tab1)
         self.tab1UI()
 
         self.tab2 = QWidget()
+        self.tab2.setObjectName("Tab")
         self.stacklayout.addWidget(self.tab2)
         self.tab2UI()
 
         self.tab3 = QWidget()
+        self.tab3.setObjectName("Tab")
         self.stacklayout.addWidget(self.tab3)
         self.tab3UI()
 
         self.tab4 = QWidget()
+        self.tab4.setObjectName("Tab")
         self.stacklayout.addWidget(self.tab4)
         self.tab4UI()
 
@@ -102,13 +121,10 @@ class MainWindow(QMainWindow):
         self.InstallProgress.setRange(0, Settings["Steps"])
         self.InstallProgress.setValue(1)
 
-        button_layout.addWidget(self.InstallProgress)
+        top_layout.addWidget(self.InstallProgress)
 
-        widget = QWidget()
-        widget.setLayout(pagelayout)
-        self.setCentralWidget(widget)
-
-        # self.activate_tab_4()
+        self.centralWidget.setLayout(pagelayout)
+        self.setCentralWidget(self.centralWidget)
 
         ArguemntPath = False
         if steampath != None:
@@ -117,9 +133,19 @@ class MainWindow(QMainWindow):
 
             self.activate_tab_2()
 
+    def ContinueAction(self):
+        if self.TabIndex == 1:
+            self.SubmitPath()
+        elif self.TabIndex == 2:
+            self.SteamSubmit()
+        elif self.TabIndex == 4:
+            self.Finish()
+
     def activate_tab_2(self):  # GUI Backend
         self.TabIndex = 2
         self.stacklayout.setCurrentIndex(1)
+        self.SubmitButton.setEnabled(False)
+        self.SubmitButton.setText("Login to Steam")
         self.InstallProgress.setFormat("Login to Steam")
         self.InstallProgress.setValue(self.TabIndex)
 
@@ -127,12 +153,15 @@ class MainWindow(QMainWindow):
         if self.FinishedLogging:
             self.TabIndex = 3
             self.stacklayout.setCurrentIndex(2)
+            self.SubmitButton.hide()
             self.InstallProgress.setFormat("Downgrade Fallout 4")
             self.InstallProgress.setValue(self.TabIndex)
 
     def activate_tab_4(self):  # GUI Backend
         self.TabIndex = 4
         self.stacklayout.setCurrentIndex(3)
+        self.SubmitButton.show()
+        self.SubmitButton.setText("Finish!")
         self.InstallProgress.setFormat("Bethesda, Bethesda Never Changes")
         self.InstallProgress.setValue(self.TabIndex)
 
@@ -181,38 +210,38 @@ class MainWindow(QMainWindow):
             )
         )
 
-        self.PathSubmit = QPushButton(text="Continue")
-
-        self.PathSubmit.pressed.connect(self.SubmitPath)
-
         hbox = QHBoxLayout()
+        hboxwidget = QWidget()
 
         self.PathEntry = QLineEdit()
         self.PathEntry.returnPressed.connect(self.SubmitPath)
+        self.PathEntry.setObjectName("InsideTextBox")
         if Settings["SteamPath"] != "":
             self.PathEntry.setText(Settings["SteamPath"])
-            self.PathSubmit.setEnabled(True)
+            self.SubmitButton.setEnabled(True)
         else:
-            self.PathSubmit.setEnabled(False)
+            self.SubmitButton.setEnabled(False)
         self.PathEntry.textChanged.connect(self.edit_text_changed1)
 
         self.PathButton = QPushButton()
         self.PathButton.setIcon(QIcon(Util.resource_path("img/folder.svg")))
+        self.PathButton.setObjectName("PathButton")
         self.PathButton.pressed.connect(self.GetDirectory)
 
         hbox.addWidget(self.PathEntry)
         hbox.addWidget(self.PathButton)
+        hboxwidget.setObjectName("TextBox")
+        hboxwidget.setLayout(hbox)
 
-        layout.addRow(QLabel("Steam Path:"), hbox)
-        layout.addRow(self.PathSubmit)
+        layout.addRow(QLabel("Steam Path:"), hboxwidget)
 
         self.tab1.setLayout(layout)
 
     def edit_text_changed1(self, text):  # GUI Backend
         if self.PathEntry.text() == "":
-            self.PathSubmit.setEnabled(False)
+            self.SubmitButton.setEnabled(False)
         else:
-            self.PathSubmit.setEnabled(True)
+            self.SubmitButton.setEnabled(True)
 
     def GetDirectory(self):  # GUI Backend
         if not Util.WhereSteam() == False:
@@ -306,31 +335,30 @@ class MainWindow(QMainWindow):
         self.UsernameEntry = QLineEdit()
         self.UsernameEntry.returnPressed.connect(self.GoToPassword)
         self.UsernameEntry.textChanged.connect(self.edit_text_changed2)
+        self.UsernameEntry.setObjectName("TextBox")
+
         self.PasswordEntry = QLineEdit()
         self.PasswordEntry.setEchoMode(QLineEdit.EchoMode.Password)
         self.PasswordEntry.returnPressed.connect(self.SteamSubmit)
         self.PasswordEntry.textChanged.connect(self.edit_text_changed2)
+        self.PasswordEntry.setObjectName("TextBox")
+
         self.PasswordCheck = QCheckBox()
         self.PasswordCheck.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.PasswordCheck.setChecked(True)
         self.PasswordCheck.stateChanged.connect(self.ChangeHiddenPassword)
 
-        self.LoginButton = QPushButton(text="Login to Steam")
-        self.LoginButton.setEnabled(False)
-        self.LoginButton.pressed.connect(self.SteamSubmit)
-
         layout.addRow("Username:", self.UsernameEntry)
         layout.addRow("Password:", self.PasswordEntry)
         layout.addRow("Password hidden:", self.PasswordCheck)
-        layout.addRow(self.LoginButton)
 
         self.tab2.setLayout(layout)
 
     def edit_text_changed2(self, text):  # GUI Backend
         if self.UsernameEntry.text() == "" or self.PasswordEntry.text() == "":
-            self.LoginButton.setEnabled(False)
+            self.SubmitButton.setEnabled(False)
         else:
-            self.LoginButton.setEnabled(True)
+            self.SubmitButton.setEnabled(True)
 
     def GoToPassword(self):  # GUI Backend
         self.PasswordEntry.setFocus()
@@ -479,6 +507,8 @@ class MainWindow(QMainWindow):
         labelbox1.addWidget(
             QLabel("<p>Please open your steam app and authorise your login</p>")
         )
+        labelbox1.addWidget(QLabel("<p>Also make sure the capitalization</p>"))
+        labelbox1.addWidget(QLabel("<p>of your username and password are correct</p>"))
 
         SteamGDlgLayout.addItem(
             labelbox1,
@@ -506,8 +536,6 @@ class MainWindow(QMainWindow):
         self.GuardEntry.setPlaceholderText("Steam guard code")
         self.GuardEntry.setFocus(True)
 
-        # SteamGDlgLayout.addWidget(GuardLabel, 3, 0)
-        # SteamGDlgLayout.addItem(LineBox, 3, 0, 1, 2)
         self.SteamGDlg.setWindowTitle("Steam Guard Dialog")
         self.SteamGDlg.setLayout(SteamGDlgLayout)
         self.GuardEntry.setFocus()
@@ -568,11 +596,9 @@ class MainWindow(QMainWindow):
         self.SteamPDlg = QDialog(self)
         self.SteamPDlgLayout = QFormLayout()
 
-        self.SteamPDlgLayout.addRow(QLabel("<h3>Incorrect Password.</h3>"))
-        self.SteamPDlgLayout.addRow(QLabel("<p>Please re-enter the password.</p>"))
-        self.SteamPDlgLayout.addRow(
-            QLabel("<p>Remember to <b>check</b> if it is correct.</p>")
-        )
+        self.SteamPDlgLayout.addRow(QLabel("<h3>Incorrect Auth.</h3>"))
+        self.SteamPDlgLayout.addRow(QLabel("<p>Please check if your username.</p>"))
+        self.SteamPDlgLayout.addRow(QLabel("<p>and password are correct</p>"))
         self.SteamPDlg.setWindowTitle("Steam Password Dialog")
         self.SteamPDlg.setLayout(self.SteamPDlgLayout)
         self.SteamPDlg.exec()
@@ -766,20 +792,16 @@ class MainWindow(QMainWindow):
 
         icon = QIcon(Util.resource_path("img/FOLON256.png"))
         self.DiscordButton = QPushButton()
+        self.DiscordButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.DiscordButton.setIcon(icon)
         self.DiscordButton.setIconSize(QSize(200, 200))
 
         self.DiscordButton.pressed.connect(self.OpenDiscord)
 
-        self.FinisButton = QPushButton("Finish!")
-        self.FinisButton.pressed.connect(self.Finish)
-
         layout.addWidget(self.DiscordButton, 0, 1, 1, 1)
 
         separator_horizontal = QHSeparationLine()
         layout.addWidget(separator_horizontal, 1, 0, 1, 2)
-        layout.addWidget(QLabel("<p>Developed by Cornelius Rosenaa</p>"), 2, 0, 1, 1)
-        layout.addWidget(self.FinisButton, 2, 1, 1, 1)
 
         self.tab4.setLayout(layout)
 
@@ -802,6 +824,9 @@ def main(steampath=None):
     if not os.path.isdir("FOLON-Downgrader-Files"):
         os.mkdir("FOLON-Downgrader-Files")
     shutil.copy(Util.resource_path("img/check.svg"), "FOLON-Downgrader-Files/")
+    shutil.copy(
+        Util.resource_path("img/FOLONBackground.png"), "FOLON-Downgrader-Files/"
+    )
 
     app = QApplication(sys.argv)
     CSSFile = Util.resource_path("FOLON.css")
@@ -812,8 +837,8 @@ def main(steampath=None):
         ex = MainWindow(steampath)
     else:
         ex = MainWindow()
-    # testDialog = test.ExampleWindow()
-    # testDialog.show()
+    ex.setMaximumWidth(ex.width())
+    ex.setMaximumHeight(ex.height())
     ex.show()
 
     sys.exit(app.exec())

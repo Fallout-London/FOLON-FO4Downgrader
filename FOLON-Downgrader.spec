@@ -10,7 +10,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=["img/FOLON4K.png"],
+    excludes=["img/FOLON4K.png", "img/FOLON_CoverBanner.png", "img/FOLONBackground.svg"],
     noarchive=False,
     optimize=0,
 )
