@@ -147,17 +147,19 @@ def CleanUp(Path):
         shutil.rmtree("__pycache__")
     except:
         pass
-    BlockUpdates()
 
 
 def BlockUpdates():
+    import os
+    import stat
+
     for i in WhereSteam():
-        try:
-            FilePath = i.replace("/common", "/appmanifest_377160.acf")
-            print(FilePath)
-            os.chmod(FilePath, stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
-        except:
-            pass
+        #try:
+        FilePath = i.replace("/common", "/appmanifest_377160.acf")
+        print(FilePath)
+        os.chmod(FilePath, stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
+        #except:
+        #    pass
 
 
 if __name__ == "__main__":

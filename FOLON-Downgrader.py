@@ -132,6 +132,9 @@ class MainWindow(QMainWindow):
             self.SteamPath = steampath
 
             self.activate_tab_2()
+        else:
+            self.activate_tab_4()
+            self.SubmitButton.setEnabled(True)
 
     def ContinueAction(self):
         if self.TabIndex == 1:
@@ -456,11 +459,6 @@ class MainWindow(QMainWindow):
             self.OpenRateDialog()
         elif result == "PasswordFail":
             self.PasswordFail()
-        
-        try:
-            self.SteamGDlg.close()
-        except:
-            pass
 
     def SteamDialog(self):  # GUI
         Util.Loading = False
@@ -524,7 +522,7 @@ class MainWindow(QMainWindow):
         )
 
         GuardButton = QPushButton(text="Submit")
-        GuardButton.pressed.connect(self.LoginSteam)
+        GuardButton.pressed.connect(self.GuardSubmitInit2)
         SteamGDlgLayout.addWidget(
             GuardButton,
             2,
@@ -545,6 +543,19 @@ class MainWindow(QMainWindow):
         self.SteamGDlg.setLayout(SteamGDlgLayout)
         self.GuardEntry.setFocus()
         self.SteamGDlg.exec()
+
+    def GuardSubmitInit2(self):
+        try:
+            self.SteamGDlg.close()
+        except:
+            pass
+
+        self.Loading(
+            self.LoginSteam,
+            text="Checking auth",
+            UseResult=True,
+            PostFunction=self.LoginPopups,
+        )
 
     def SteamGuideDialog(self, parent):  # GUI
         if not self.shown:
@@ -817,6 +828,13 @@ class MainWindow(QMainWindow):
 
     def Finish(self):
         self.close()
+        Util.BlockUpdates()
+
+        try:
+            print(self.SteamPath)
+        except:
+            self.SteamPath = Util.WhereSteam()[0]
+
         if Util.IsBundled():
             os.execv(sys.executable, sys.argv + ["--clean", self.SteamPath])
         else:
