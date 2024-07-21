@@ -132,9 +132,6 @@ class MainWindow(QMainWindow):
             self.SteamPath = steampath
 
             self.activate_tab_2()
-        else:
-            self.activate_tab_4()
-            self.SubmitButton.setEnabled(True)
 
     def ContinueAction(self):
         if self.TabIndex == 1:
