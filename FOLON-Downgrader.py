@@ -456,6 +456,11 @@ class MainWindow(QMainWindow):
             self.OpenRateDialog()
         elif result == "PasswordFail":
             self.PasswordFail()
+        
+        try:
+            self.SteamGDlg.close()
+        except:
+            pass
 
     def SteamDialog(self):  # GUI
         Util.Loading = False
