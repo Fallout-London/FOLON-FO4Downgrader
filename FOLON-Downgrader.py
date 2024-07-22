@@ -126,6 +126,8 @@ class MainWindow(QMainWindow):
         self.centralWidget.setLayout(pagelayout)
         self.setCentralWidget(self.centralWidget)
 
+        self.activate_tab_2()
+
         ArguemntPath = False
         if steampath != None:
             ArguemntPath = True
@@ -351,6 +353,22 @@ class MainWindow(QMainWindow):
         layout.addRow("Username:", self.UsernameEntry)
         layout.addRow("Password:", self.PasswordEntry)
         layout.addRow("Password hidden:", self.PasswordCheck)
+
+        Box = QHBoxLayout()
+
+        AlertIcon = QLabel()
+        AlertIcon.setPixmap(QPixmap("img/Alert.svg"))
+
+        AlertLabel = QLabel(
+            "<a style='color:White' href='https://github.com/Fallout-London/FOLON-FO4Downgrader/blob/main/Trust.md'>You can also do this process manually if you'd like.</a>"
+        )
+        AlertLabel.setOpenExternalLinks(True)
+
+        Box.addWidget(AlertIcon)
+        Box.addWidget(AlertLabel)
+        Box.addStretch()
+
+        layout.addRow(Box)
 
         self.tab2.setLayout(layout)
 
