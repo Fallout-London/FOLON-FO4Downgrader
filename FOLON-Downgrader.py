@@ -126,8 +126,6 @@ class MainWindow(QMainWindow):
         self.centralWidget.setLayout(pagelayout)
         self.setCentralWidget(self.centralWidget)
 
-        self.activate_tab_2()
-
         ArguemntPath = False
         if steampath != None:
             ArguemntPath = True
