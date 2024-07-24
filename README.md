@@ -10,8 +10,9 @@ To run this [get a binary from Releases](https://github.com/Fallout-London/FOLON
 Read the [build document](./build.md)
 
 ## Thanks to
-Cornelius Rosenaa for making this\
-Michel for testing on windows\
-https://feathericons.com/ for icons\
-Zerratar for reference FO4-Downgrader\
-yjg30737 for his PyQtLoadingscreen script
+[Cornelius Rosenaa for making this](https://coffandro.github.io/)\
+[Michel for testing on windows](https://www.linkedin.com/in/michellichand/)\
+[SteamRE for DepotDownloader](https://github.com/SteamRE/DepotDownloader)\
+[Zerratar for reference FO4-Downgrader](https://www.twitch.tv/zerratar)\
+[feathericons for icons](https://feathericons.com/)\
+[yjg30737 for his PyQtLoadingscreen script](https://github.com/yjg30737/pyqt-translucent-full-loading-screen-thread)
