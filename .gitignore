@@ -9,3 +9,4 @@
 .fuse_hidden*
 test.py
 *.zip
+certificate.pfx

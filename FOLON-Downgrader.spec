@@ -23,6 +23,7 @@ exe = EXE(
     a.datas,
     [],
     name="FOLON-Downgrader",
+    version="version.txt",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

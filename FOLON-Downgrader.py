@@ -458,6 +458,9 @@ class MainWindow(QMainWindow):
         elif index == 5:
             Settings["LoginResult"] = "PasswordFail"
             Util.Write_Settings(Settings)
+        else:
+            Settings["LoginResult"] = "PasswordFail"
+            Util.Write_Settings(Settings)
 
     def LoginPopups(self):  # Steam
         Settings = Util.Read_Settings()
