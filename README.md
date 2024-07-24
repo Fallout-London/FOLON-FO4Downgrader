@@ -1,6 +1,6 @@
 # FOLON's Fallout 4 Downgrader
 
-If you do not trust it there's a [document Here](./Trust.md) which guides you through downgrading manually.
+If you do not trust it there's a [document Here](./Manually.md) which guides you through downgrading manually.
 
 On linux This requires qt and curl to be installed, how it is installed depends on your distro, but it should work on windows out of the box.
 
