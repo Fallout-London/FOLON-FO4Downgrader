@@ -45,10 +45,7 @@ def WhereSteam():
         steamfounds += 1
         SteamLocations.append(f"{home}/.steam/steam/steamapps/common")
 
-    if steamfounds == 0:
-        return False
-    else:
-        return SteamLocations
+    return SteamLocations
 
 
 def resource_path(relative_path):
@@ -154,12 +151,12 @@ def BlockUpdates():
     import stat
 
     for i in WhereSteam():
-        #try:
-        FilePath = i.replace("/common", "/appmanifest_377160.acf")
-        print(FilePath)
+        try:
+            FilePath = i.replace("/common", "/appmanifest_377160.acf")
+            print(FilePath)
         os.chmod(FilePath, stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
-        #except:
-        #    pass
+        except:
+            pass
 
 
 if __name__ == "__main__":
