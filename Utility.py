@@ -59,7 +59,11 @@ def WhereSteam():
             steamfounds += 1
             SteamLocations.append(f"{home}/.steam/steam/steamapps/common")
 
-    return SteamLocations
+    if steamfounds == 0:
+        SteamLocations.append(home)
+        return SteamLocations
+    else:
+        return SteamLocations
 
 
 def resource_path(relative_path):
