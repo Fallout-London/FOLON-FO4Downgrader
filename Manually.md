@@ -86,3 +86,12 @@ _Note 1: The location of your ‘steamapps/appmanifest_377160.acf’ file may va
 C:\Program Files (x86)\Steam\steamapps\appmanifest_377160.acf
 ```
 
+After doing all of this you should remove Creation Club content by removing every file inside 'steamapps/common/Fallout 4/Data' with cc in the start
+
+<details open>
+<summary>Image examples</summary>
+
+![](./img/Manually/image9.png)
+</details>
+
+<br>
