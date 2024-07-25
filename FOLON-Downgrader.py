@@ -795,9 +795,9 @@ class MainWindow(QMainWindow):
             Util.Write_Settings(Settings)
 
     def RemoveCC(self):
-        for i in os.listdir(self.SteamPath + "/data"):
+        for i in os.listdir(self.SteamPath + "/Data"):
             if i[:2] == "cc":
-                os.remove(self.SteamPath + "/data/" + i)
+                os.remove(self.SteamPath + "/Data/" + i)
         self.Downloaded += 1
 
     ##########################################################################################
