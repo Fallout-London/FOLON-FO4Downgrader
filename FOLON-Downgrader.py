@@ -445,6 +445,7 @@ class MainWindow(QMainWindow):
                 "Steam Mobile App",
                 "RateLimitExceeded",
                 "InvalidPassword.",
+                "Steam failed",
                 pexpect.TIMEOUT,
             ],
         )
