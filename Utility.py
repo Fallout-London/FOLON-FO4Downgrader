@@ -171,7 +171,21 @@ def BlockUpdates():
             os.chmod(FilePath, stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
         except:
             pass
+    
+def oops(type, value, tb):
+    import sys
+    import traceback
+    from tkinter.messagebox import showerror
+    showerror('Error', '\n'.join(traceback.format_exception(type, value, tb)))
+    sys.exit(1)
 
+def IsBinaryAvilable(Binary):
+    try:
+        import subprocess
+        subprocess.call([Binary])
+    except:
+        from tkinter import messagebox
+        messagebox.showerror('Missing Binary', f'Error: {Binary} is not available, please install it depending on OS')
 
 if __name__ == "__main__":
     print(WhereSteam())

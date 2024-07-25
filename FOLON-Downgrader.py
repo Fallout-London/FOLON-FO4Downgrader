@@ -1,8 +1,11 @@
 import sys
+import Utility as Util
+
+sys.excepthook = Util.oops
+
 import shutil
 import os
 import stat
-import Utility as Util
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
@@ -35,9 +38,14 @@ def SetupFont():
     import zipfile
 
     if not os.path.isdir("FOLON-Downgrader-Files/Fonts"):
-        os.system(
-            'curl -sqL "https://dl.dafont.com/dl/?f=overseer" -o FOLON-Downgrader-Files/overseer.zip'
-        )
+        if Util.IsWindows():
+            os.system(
+                'curl.exe -sqL "https://dl.dafont.com/dl/?f=overseer" -o FOLON-Downgrader-Files/overseer.zip'
+            )
+        else:
+            os.system(
+                'curl -sqL "https://dl.dafont.com/dl/?f=overseer" -o FOLON-Downgrader-Files/overseer.zip'
+            )
         with zipfile.ZipFile("FOLON-Downgrader-Files/overseer.zip", "r") as zip_ref:
             zip_ref.extractall("FOLON-Downgrader-Files/Fonts")
         os.remove("FOLON-Downgrader-Files/overseer.zip")
@@ -769,7 +777,7 @@ class MainWindow(QMainWindow):
     def Install(self, index):
         self.Steam.timeout = None
         self.Steam = pexpect.popen_spawn.PopenSpawn(
-            f'{self.DepotDownloader} -username "{self.Username}" -remember-password -app 377160 -depot {self.Depots[index][0]} -manifest "{self.Depots[index][1]}" -dir "{self.SteamPath}" -validate',
+            f'{self.DepotDownloader} -username -remember-password -app 377160 -depot {self.Depots[index][0]} -manifest "{self.Depots[index][1]}" -dir "{self.SteamPath}" -validate',
             logfile=sys.stdout.buffer,
             timeout=None,
         )
@@ -860,6 +868,11 @@ class MainWindow(QMainWindow):
 
 
 def main(steampath=None):
+    if Util.IsWindows():
+        Util.IsBinaryAvilable("curl.exe")
+    else:
+        Util.IsBinaryAvilable("curl")
+
     if not os.path.isdir("FOLON-Downgrader-Files"):
         os.mkdir("FOLON-Downgrader-Files")
     shutil.copy(Util.resource_path("img/check.svg"), "FOLON-Downgrader-Files/")
