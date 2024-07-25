@@ -2,3 +2,4 @@
 @RD /S /Q ".\dist"
 @RD /S /Q ".\FOLON-Downgrader-Files"
 @RD /S /Q ".\__pycache__"
+@RD /S /Q ".\.venv"
