@@ -546,7 +546,7 @@ class MainWindow(QMainWindow):
         )
 
         GuardButton = QPushButton(text="Submit")
-        GuardButton.pressed.connect(self.GuardSubmitInit2)
+        GuardButton.pressed.connect(self.LoginSteam)
         SteamGDlgLayout.addWidget(
             GuardButton,
             2,
@@ -567,19 +567,6 @@ class MainWindow(QMainWindow):
         self.SteamGDlg.setLayout(SteamGDlgLayout)
         self.GuardEntry.setFocus()
         self.SteamGDlg.exec()
-
-    def GuardSubmitInit2(self):
-        try:
-            self.SteamGDlg.close()
-        except:
-            pass
-
-        self.Loading(
-            self.LoginSteam,
-            text="Checking auth",
-            UseResult=True,
-            PostFunction=self.LoginPopups,
-        )
 
     def SteamGuideDialog(self, parent):  # GUI
         if not self.shown:
