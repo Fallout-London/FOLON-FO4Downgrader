@@ -358,7 +358,7 @@ class MainWindow(QMainWindow):
         AlertIcon.setPixmap(QPixmap("img/Alert.svg"))
 
         AlertLabel = QLabel(
-            "<a style='color:White' href='https://github.com/Fallout-London/FOLON-FO4Downgrader/blob/main/Trust.md'>You can also do this process manually if you'd like.</a>"
+            "<a style='color:White' href='https://github.com/Fallout-London/FOLON-FO4Downgrader/blob/main/Manually.md'>You can also do this process manually if you'd like.</a>"
         )
         AlertLabel.setOpenExternalLinks(True)
 
