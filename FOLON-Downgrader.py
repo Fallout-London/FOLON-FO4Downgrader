@@ -769,7 +769,7 @@ class MainWindow(QMainWindow):
     def Install(self, index):
         self.Steam.timeout = None
         self.Steam = pexpect.popen_spawn.PopenSpawn(
-            f'{self.DepotDownloader} -username "{self.Username}" -password "{self.Password}" -remember-password -app 377160 -depot {self.Depots[index][0]} -manifest "{self.Depots[index][1]}" -dir "{self.SteamPath}" -validate',
+            f'{self.DepotDownloader} -username "{self.Username}" -remember-password -app 377160 -depot {self.Depots[index][0]} -manifest "{self.Depots[index][1]}" -dir "{self.SteamPath}" -validate',
             logfile=sys.stdout.buffer,
             timeout=None,
         )
