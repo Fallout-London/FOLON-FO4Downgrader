@@ -871,9 +871,7 @@ def main(steampath=None):
     shutil.copy(
         Util.resource_path("img/FOLONBackground.png"), "FOLON-Downgrader-Files/"
     )
-    shutil.copy(
-        Util.resource_path("DepotsList.txt"), "FOLON-Downgrader-Files/"
-    )
+    shutil.copy(Util.resource_path("DepotsList.txt"), "FOLON-Downgrader-Files/")
 
     app = QApplication(sys.argv)
     CSSFile = Util.resource_path("FOLON.css")
