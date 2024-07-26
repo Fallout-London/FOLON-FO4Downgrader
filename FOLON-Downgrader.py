@@ -731,7 +731,7 @@ class MainWindow(QMainWindow):
 
         Header = QLabel("Downgrade Fallout 4")
         Header.setFont(QFont("Overseer", 30))
-        layout.addRow(Header)
+        #layout.addRow(Header)
         layout.addRow(
             QLabel(
                 "<p>The following button can take quite a while, please <b>be patient</b>.</p>"
@@ -739,8 +739,10 @@ class MainWindow(QMainWindow):
         )
 
         InstallButton = QPushButton(
-            text="Downgrade Fallout 4 (This will take a long time)"
+            text="Downgrade Fallout 4 \n(This will take a long time)"
         )
+        InstallButton.setObjectName("InstallButton")
+        InstallButton.setFont(QFont("Overseer", 25))
         InstallButton.pressed.connect(self.InstallInit)
         layout.addRow(InstallButton)
 

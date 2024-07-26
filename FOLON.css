@@ -15,6 +15,17 @@ QPushButton:enabled {
     color: #ddd4ea;
     background-color: #a380d2;
 }
+QPushButton#InstallButton {
+    margin-left: 100px;
+    margin-right: 100px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    /*background-color: #ee8695;
+    color: black;*/
+}
+/*QPushButton#InstallButton::Hover {
+    background-color: #fbbbad;
+}*/
 QWidget#TextBox {
     border-bottom: 2px solid #a380d2;
 }
