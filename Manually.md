@@ -1,5 +1,7 @@
 # How to downgrade Fallout 4 manually
 
+Rolling back to the `1.10.163.0` version of Fallout 4 is required for Fallout: London to function correctly. This guide explains the process manually if you do not wish to use the automated FO4Downgrader tool.
+
 Pre-requisites for downgrading:
 Fallout 4, Wasteland Workshop DLC, Automatron DLC
 
@@ -27,26 +29,65 @@ Then input the following 1 at a time, Steam will notify you once each download i
 
 <br>
 
+Part A
 ```
 download_depot 377160 377161 7497069378349273908
 ```
-```
-download_depot 377160 377162 5847529232406005096
-```
+Part B
 ```
 download_depot 377160 377163 5819088023757897745
 ```
+Executable file
+```
+download_depot 377160 377162 5847529232406005096
+```
+English Language Pack
 ```
 download_depot 377160 377164 2178106366609958945
 ```
-```
-download_depot 377160 435880 1255562923187931216
-```
+Automatron DLC
 ```
 download_depot 377160 435870 1691678129192680960
 ```
+Automatron DLC English Language Pack
 ```
 download_depot 377160 435871 5106118861901111234
+```
+Wasteland Workshop DLC
+```
+download_depot 377160 435880 1255562923187931216
+```
+Far Harbour DLC
+```
+download_depot 377160 435881 1207717296920736193
+```
+Far Harbour DLC English Language Pack
+```
+download_depot 377160 435882 8482181819175811242
+```
+Contraptions Workshop DLC
+```
+download_depot 377160 480630 5527412439359349504
+```
+Vault-Tec Workshop DLC
+```
+download_depot 377160 480631 6588493486198824788
+```
+Vault-Tec Workshop DLC English Language Pack
+```
+download_depot 377160 393885 5000262035721758737
+```
+Nuka World DLC
+```
+download_depot 377160 490650 4873048792354485093
+```
+Nuka World DLC English Language Pack
+```
+download_depot 377160 393895 7677765994120765493
+```
+HD Texture Pack DLC (Optional - not required for FOLON, but if you have the DLC you need this depot)
+```
+download_depot 377160 540810 1558929737289295473
 ```
 
 After download each depot manually you can move the contents of each subfolder in this directory into your Fallout 4 installation folder, ensuring you overwrite all files in the destination folder
