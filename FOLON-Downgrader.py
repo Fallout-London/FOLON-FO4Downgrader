@@ -12,6 +12,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
 from QLines import *
 import argparse
 import pexpect.popen_spawn
+import urllib.request, zipfile, io
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
 
@@ -35,37 +36,30 @@ class ScreenThread(LoadingThread):
 
 
 def SetupFont():
-    import zipfile
+    url = "https://dl.dafont.com/dl/?f=overseer"
+    with urllib.request.urlopen(url) as dl_file:
+        with open("FOLON-Downgrader-Files/overseer.zip", 'wb') as out_file:
+            out_file.write(dl_file.read())
 
-    if not os.path.isdir("FOLON-Downgrader-Files/Fonts"):
-        if Util.IsWindows():
-            os.system(
-                'curl.exe -sqL "https://dl.dafont.com/dl/?f=overseer" -o FOLON-Downgrader-Files/overseer.zip'
-            )
-        else:
-            os.system(
-                'curl -sqL "https://dl.dafont.com/dl/?f=overseer" -o FOLON-Downgrader-Files/overseer.zip'
-            )
-        with zipfile.ZipFile("FOLON-Downgrader-Files/overseer.zip", "r") as zip_ref:
-            zip_ref.extractall("FOLON-Downgrader-Files/Fonts")
-        os.remove("FOLON-Downgrader-Files/overseer.zip")
+    with zipfile.ZipFile("FOLON-Downgrader-Files/overseer.zip", "r") as zip_ref:
+        zip_ref.extractall("FOLON-Downgrader-Files/Fonts/")
+    os.remove("FOLON-Downgrader-Files/overseer.zip")
 
     QFontDatabase.addApplicationFont("FOLON-Downgrader-Files/Fonts/Overseer.otf")
 
 
 def SetupSteam():
-    import zipfile
+    global curlcommand
 
     if not os.path.isdir("FOLON-Downgrader-Files/SteamFiles"):
         if Util.IsWindows():
-            os.system(
-                'curl -sqL "https://github.com/coffandro/DepotDownloader/releases/download/release/DepotDownloader-windows-x64.zip" -o FOLON-Downgrader-Files/steam.zip'
-            )
-
+            url = "https://github.com/coffandro/DepotDownloader/releases/download/release/DepotDownloader-windows-x64.zip"
         else:
-            os.system(
-                'curl -sqL "https://github.com/coffandro/DepotDownloader/releases/download/release/DepotDownloader-linux-x64.zip" -o FOLON-Downgrader-Files/steam.zip'
-            )
+            url = "https://github.com/coffandro/DepotDownloader/releases/download/release/DepotDownloader-linux-x64.zip"
+        
+        with urllib.request.urlopen(url) as dl_file:
+            with open("FOLON-Downgrader-Files/steam.zip", 'wb') as out_file:
+                out_file.write(dl_file.read())
 
         with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
             zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
@@ -547,7 +541,7 @@ class MainWindow(QMainWindow):
         )
 
         GuardButton = QPushButton(text="Submit")
-        GuardButton.pressed.connect(self.LoginSteam)
+        GuardButton.pressed.connect(self.GuardSubmitInit2)
         SteamGDlgLayout.addWidget(
             GuardButton,
             2,
@@ -568,6 +562,19 @@ class MainWindow(QMainWindow):
         self.SteamGDlg.setLayout(SteamGDlgLayout)
         self.GuardEntry.setFocus()
         self.SteamGDlg.exec()
+    
+    def GuardSubmitInit2(self):
+        try:
+            self.SteamGDlg.close()
+        except:
+            pass
+
+        self.Loading(
+            self.LoginSteam,
+            text="Checking auth",
+            UseResult=True,
+            PostFunction=self.LoginPopups,
+        )
 
     def SteamGuideDialog(self, parent):  # GUI
         if not self.shown:
@@ -695,7 +702,7 @@ class MainWindow(QMainWindow):
         )
         LinkLabel.setOpenExternalLinks(True)
         RateDialogLayout.addRow(LinkLabel)
-        RateDialogLayout.addRow(QLabel("And ping @Coffandro for help"))
+        RateDialogLayout.addRow(QLabel("And ask in Downgrader-Bugs for help"))
 
         RateDialogButton = QPushButton(text="Close")
         RateDialogButton.pressed.connect(self.CloseRateDialog)
@@ -858,11 +865,6 @@ class MainWindow(QMainWindow):
 
 
 def main(steampath=None):
-    if Util.IsWindows():
-        Util.IsBinaryAvilable("curl.exe")
-    else:
-        Util.IsBinaryAvilable("curl")
-
     if not os.path.isdir("FOLON-Downgrader-Files"):
         os.mkdir("FOLON-Downgrader-Files")
     shutil.copy(Util.resource_path("img/check.svg"), "FOLON-Downgrader-Files/")

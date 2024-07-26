@@ -172,7 +172,7 @@ def oops(type, value, tb):
 def IsBinaryAvilable(Binary):
     try:
         import subprocess
-        subprocess.call([Binary])
+        subprocess.call(Binary)
     except:
         from tkinter import messagebox
         messagebox.showerror('Missing Binary', f'Error: {Binary} is not available, please install it depending on OS')
