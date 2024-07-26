@@ -38,7 +38,7 @@ class ScreenThread(LoadingThread):
 def SetupFont():
     url = "https://dl.dafont.com/dl/?f=overseer"
     with urllib.request.urlopen(url) as dl_file:
-        with open("FOLON-Downgrader-Files/overseer.zip", 'wb') as out_file:
+        with open("FOLON-Downgrader-Files/overseer.zip", "wb") as out_file:
             out_file.write(dl_file.read())
 
     with zipfile.ZipFile("FOLON-Downgrader-Files/overseer.zip", "r") as zip_ref:
@@ -56,9 +56,9 @@ def SetupSteam():
             url = "https://github.com/coffandro/DepotDownloader/releases/download/release/DepotDownloader-windows-x64.zip"
         else:
             url = "https://github.com/coffandro/DepotDownloader/releases/download/release/DepotDownloader-linux-x64.zip"
-        
+
         with urllib.request.urlopen(url) as dl_file:
-            with open("FOLON-Downgrader-Files/steam.zip", 'wb') as out_file:
+            with open("FOLON-Downgrader-Files/steam.zip", "wb") as out_file:
                 out_file.write(dl_file.read())
 
         with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
@@ -562,7 +562,7 @@ class MainWindow(QMainWindow):
         self.SteamGDlg.setLayout(SteamGDlgLayout)
         self.GuardEntry.setFocus()
         self.SteamGDlg.exec()
-    
+
     def GuardSubmitInit2(self):
         try:
             self.SteamGDlg.close()
@@ -738,7 +738,7 @@ class MainWindow(QMainWindow):
 
         Header = QLabel("Downgrade Fallout 4")
         Header.setFont(QFont("Overseer", 30))
-        #layout.addRow(Header)
+        # layout.addRow(Header)
         layout.addRow(
             QLabel(
                 "<p>The following button can take quite a while, please <b>be patient</b>.</p>"
