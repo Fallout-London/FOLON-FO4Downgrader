@@ -31,7 +31,7 @@ StringFileInfo(
     u'040904B0',
     [StringStruct(u'CompanyName', u'FOLON Team'),
     StringStruct(u'FileDescription', u'Downgrades Fallout 4'),
-    StringStruct(u'FileVersion', u'1.13'),
+    StringStruct(u'FileVersion', u'1.5.2'),
     StringStruct(u'InternalName', u'FOLON-Downgrader'),
     StringStruct(u'LegalCopyright', u'Copyright (c) FOLON Team'),
     StringStruct(u'OriginalFilename', u'FOLON-Downgrader.exe'),
