@@ -28,36 +28,22 @@ def WhereSteam():
     SteamLocations = []
     steamfounds = 0
 
-    if IsWindows():
-        import winreg
-        
-        try:
-            location = winreg.HKEY_LOCAL_MACHINE
-            regpath = winreg.OpenKeyEx(location, r"SOFTWARE\\WOW6432Node\\Valve\\Steam\\")
-
-            steamfounds += 1
-            SteamLocations.append = winreg.QueryValueEx(regpath,"InstallPath")
-
-            if regpath:
-                winreg.CloseKey(regpath)
-        except:
-            if os.path.isdir("C:/Program Files/Steam/steamapps/common"):
-                steamfounds += 1
-                SteamLocations.append("C:/Program Files/Steam/steamapps/common")
-            if os.path.isdir("C:/Program Files (x86)/Steam/steamapps/common"):
-                steamfounds += 1
-                SteamLocations.append("C:/Program Files (x86)/Steam/steamapps/common")
-    else:
-        if os.path.isdir(
-            f"{home}/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common"
-        ):
-            steamfounds += 1
-            SteamLocations.append(
+    if os.path.isdir("C:/Program Files/Steam/steamapps/common"):
+        steamfounds += 1
+        SteamLocations.append("C:/Program Files/Steam/steamapps/common")
+    if os.path.isdir("C:/Program Files (x86)/Steam/steamapps/common"):
+        steamfounds += 1
+        SteamLocations.append("C:/Program Files (x86)/Steam/steamapps/common")
+    if os.path.isdir(
+        f"{home}/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common"
+    ):
+        steamfounds += 1
+        SteamLocations.append(
                 f"{home}/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common"
             )
-        if os.path.isdir(f"{home}/.steam/steam/steamapps/common"):
-            steamfounds += 1
-            SteamLocations.append(f"{home}/.steam/steam/steamapps/common")
+    if os.path.isdir(f"{home}/.steam/steam/steamapps/common"):
+        steamfounds += 1
+        SteamLocations.append(f"{home}/.steam/steam/steamapps/common")
 
     if steamfounds == 0:
         SteamLocations.append(home)
