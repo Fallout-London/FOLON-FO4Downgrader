@@ -29,63 +29,63 @@ Then input the following 1 at a time, Steam will notify you once each download i
 
 <br>
 
-Part A
+Part A (5332 MB)
 ```
 download_depot 377160 377161 7497069378349273908
 ```
-Part B
+Part B (18022 MB)
 ```
 download_depot 377160 377163 5819088023757897745
 ```
-Executable file
+Executable file (48 MB)
 ```
 download_depot 377160 377162 5847529232406005096
 ```
-English Language Pack
+English Language Pack (3243 MB)
 ```
 download_depot 377160 377164 2178106366609958945
 ```
-Automatron DLC
+Automatron DLC (365 MB)
 ```
 download_depot 377160 435870 1691678129192680960
 ```
-Automatron DLC English Language Pack
+Automatron DLC English Language Pack (109 MB)
 ```
 download_depot 377160 435871 5106118861901111234
 ```
-Wasteland Workshop DLC
+Wasteland Workshop DLC (54 MB)
 ```
 download_depot 377160 435880 1255562923187931216
 ```
-Far Harbour DLC
+Far Harbour DLC (1882 MB)
 ```
 download_depot 377160 435881 1207717296920736193
 ```
-Far Harbour DLC English Language Pack
+Far Harbour DLC English Language Pack (474 MB)
 ```
 download_depot 377160 435882 8482181819175811242
 ```
-Contraptions Workshop DLC
+Contraptions Workshop DLC (190 MB)
 ```
 download_depot 377160 480630 5527412439359349504
 ```
-Vault-Tec Workshop DLC
+Vault-Tec Workshop DLC (288 MB)
 ```
 download_depot 377160 480631 6588493486198824788
 ```
-Vault-Tec Workshop DLC English Language Pack
+Vault-Tec Workshop DLC English Language Pack (43 MB)
 ```
 download_depot 377160 393885 5000262035721758737
 ```
-Nuka World DLC
+Nuka World DLC (2885 MB)
 ```
 download_depot 377160 490650 4873048792354485093
 ```
-Nuka World DLC English Language Pack
+Nuka World DLC English Language Pack (298 MB)
 ```
 download_depot 377160 393895 7677765994120765493
 ```
-HD Texture Pack DLC (Optional - not required for FOLON, but if you have the DLC you need this depot)
+HD Texture Pack DLC (56371 MB) (Optional - not required for FOLON, but if you have the DLC you need this depot)
 ```
 download_depot 377160 540810 1558929737289295473
 ```
