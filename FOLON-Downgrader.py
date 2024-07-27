@@ -112,6 +112,11 @@ class MainWindow(QMainWindow):
         self.stacklayout.addWidget(self.tab3)
         self.tab3UI()
 
+        self.tab4 = QWidget()
+        self.tab4.setObjectName("Tab")
+        self.stacklayout.addWidget(self.tab4)
+        self.tab4UI()
+
         self.InstallProgress = QProgressBar(self)
         self.InstallProgress.setFormat("Locate SteamApps folder")
         self.InstallProgress.setObjectName("DowngraderProgress")
@@ -135,14 +140,14 @@ class MainWindow(QMainWindow):
             self.SubmitPath()
         elif self.TabIndex == 2:
             self.SteamSubmit()
-        elif self.TabIndex == 3:
+        elif self.TabIndex == 4:
             self.Finish()
 
     def activate_tab_2(self):  # GUI Backend
         self.TabIndex = 2
         self.stacklayout.setCurrentIndex(1)
         self.SubmitButton.setEnabled(False)
-        self.SubmitButton.setText("Login to Steam and downgrade")
+        self.SubmitButton.setText("Login to Steam")
         self.InstallProgress.setFormat("Login to Steam")
         self.InstallProgress.setValue(self.TabIndex)
 
@@ -150,10 +155,17 @@ class MainWindow(QMainWindow):
         if self.FinishedLogging:
             self.TabIndex = 3
             self.stacklayout.setCurrentIndex(2)
-            self.SubmitButton.show()
-            self.SubmitButton.setText("Finish!")
-            self.InstallProgress.setFormat("Bethesda, Bethesda Never Changes")
+            self.SubmitButton.hide()
+            self.InstallProgress.setFormat("Downgrade Fallout 4")
             self.InstallProgress.setValue(self.TabIndex)
+
+    def activate_tab_4(self):  # GUI Backend
+        self.TabIndex = 4
+        self.stacklayout.setCurrentIndex(3)
+        self.SubmitButton.show()
+        self.SubmitButton.setText("Finish!")
+        self.InstallProgress.setFormat("Bethesda, Bethesda Never Changes")
+        self.InstallProgress.setValue(self.TabIndex)
 
     #########################################################################################
     # GENERAL GUI                                                                           #
@@ -310,7 +322,6 @@ class MainWindow(QMainWindow):
 
     def tab2UI(self):  # GUI
         self.FinishedLogging = False
-        self.Downloadstep = 0
 
         layout = QFormLayout()
 
@@ -384,23 +395,14 @@ class MainWindow(QMainWindow):
                 PostFunction=self.SteamSubmit,
             )
         else:
-            if self.Downloadstep == 0:
-                self.Loading(
-                    lambda: self.LoginSteam(self.Downloadstep),
-                    text="Logging in and downgrading",
-                    UseResult=True,
-                    PostFunction=self.LoginPopups,
-                )
-            elif self.Downloadstep == 1:
-                self.Loading(
-                    self.RemoveCC,
-                    text=f"Removing Creation Club content",
-                    PostFunction=self.LoginPopups,
-                )
-            else:
-                self.activate_tab_3()
+            self.Loading(
+                self.LoginSteam,
+                text="Logging into Steam",
+                UseResult=True,
+                PostFunction=self.LoginPopups,
+            )
 
-    def LoginSteam(self, DownloadStepVAR):  # Steam
+    def LoginSteam(self):  # Steam
         self.Password = self.PasswordEntry.text()
         self.Username = self.UsernameEntry.text()
 
@@ -422,14 +424,14 @@ class MainWindow(QMainWindow):
 
         if os.path.isfile(self.DepotDownloader):
             self.Steam = pexpect.popen_spawn.PopenSpawn(
-                f'{self.DepotDownloader} -username {self.Username} -password "{self.Password}" -remember-password -app 377160 -depot 377161 377162 377163 377164 435880 435870 435871 -manifest 7497069378349273908 5847529232406005096 5819088023757897745 2178106366609958945 1255562923187931216 1691678129192680960 5106118861901111234 -dir "{self.SteamPath}" -validate',
+                f'{self.DepotDownloader} -username "{self.Username}" -password "{self.Password}" -remember-password -app 377160 -depot 377162 -dir FOLON-Downgrader-Files/SteamFiles',
                 logfile=sys.stdout.buffer,
                 timeout=120,
             )
 
-            self.Wait(DownloadStepVAR)
+            self.Wait()
 
-    def Wait(self, DownloadStepVAR):
+    def Wait(self):
         index = self.Steam.expect(
             [
                 pexpect.EOF,
@@ -444,7 +446,6 @@ class MainWindow(QMainWindow):
         if index == 0:
             Settings["LoginResult"] = "Success"
             Util.Write_Settings(Settings)
-            DownloadStepVAR += 1
         elif index == 1:
             Settings["LoginResult"] = "Guard"
             Util.Write_Settings(Settings)
@@ -568,7 +569,12 @@ class MainWindow(QMainWindow):
         except:
             pass
 
-        self.SteamSubmit()
+        self.Loading(
+            self.LoginSteam,
+            text="Checking auth",
+            UseResult=True,
+            PostFunction=self.LoginPopups,
+        )
 
     def SteamGuideDialog(self, parent):  # GUI
         if not self.shown:
@@ -708,6 +714,72 @@ class MainWindow(QMainWindow):
     def CloseRateDialog(self):  # GUI Backend
         sys.exit()
 
+    ##########################################################################################
+    # Installation                                                                           #
+    ##########################################################################################
+
+    def tab3UI(self):  # GUI
+        self.Depots = [
+            # Main game
+            [377161, 7497069378349273908],
+            [377162, 5847529232406005096],
+            [377163, 5819088023757897745],
+            [377164, 2178106366609958945],
+            # Workshops
+            [435880, 1255562923187931216],
+            # Automatron
+            [435870, 1691678129192680960],
+            [435871, 5106118861901111234],
+        ]
+        self.DownloadIndex = 0
+        self.SteamFiles = "FOLON-Downgrader-Files/SteamFiles/depots"
+        self.Downloaded = 0
+        layout = QFormLayout()
+
+        Header = QLabel("Downgrade Fallout 4")
+        Header.setFont(QFont("Overseer", 30))
+        # layout.addRow(Header)
+        layout.addRow(
+            QLabel(
+                "<p>The following button can take quite a while, please <b>be patient</b>.</p>"
+            )
+        )
+
+        InstallButton = QPushButton(
+            text="Downgrade Fallout 4 \n(This will take a long time)"
+        )
+        InstallButton.setObjectName("InstallButton")
+        InstallButton.setFont(QFont("Overseer", 25))
+        InstallButton.pressed.connect(self.InstallInit)
+        layout.addRow(InstallButton)
+
+        self.tab3.setLayout(layout)
+
+    def InstallInit(self):
+        if self.DownloadIndex < len(self.Depots):
+            self.Loading(
+                lambda: self.Install(self.DownloadIndex),
+                text=f"Downloading depot[{self.DownloadIndex+1}/{len(self.Depots)}]",
+                PostFunction=self.InstallInit,
+            )
+        elif self.Downloaded == 1:
+            self.Loading(
+                self.RemoveCC,
+                text=f"Removing Creation Club content",
+                PostFunction=self.InstallInit,
+            )
+        elif self.Downloaded == 2:
+            self.activate_tab_4()
+
+    def Install(self, index):
+        self.Steam.timeout = None
+        self.Steam = pexpect.popen_spawn.PopenSpawn(
+            f'{self.DepotDownloader} -username "{self.Username}" -remember-password -app 377160 -depot {self.Depots[index][0]} -manifest "{self.Depots[index][1]}" -dir "{self.SteamPath}" -validate',
+            logfile=sys.stdout.buffer,
+            timeout=None,
+        )
+        self.Wait3()
+
     def Wait3(self):
         index = self.Steam.expect(
             [
@@ -737,7 +809,7 @@ class MainWindow(QMainWindow):
     # FINIS STAGE                                                                            #
     ##########################################################################################
 
-    def tab3UI(self):  # GUI
+    def tab4UI(self):  # GUI
         layout = QGridLayout()
 
         TextLayout = QVBoxLayout()
@@ -768,7 +840,7 @@ class MainWindow(QMainWindow):
         separator_horizontal = QHSeparationLine()
         layout.addWidget(separator_horizontal, 1, 0, 1, 2)
 
-        self.tab3.setLayout(layout)
+        self.tab4.setLayout(layout)
 
     def OpenDiscord(self):
         from webbrowser import open
