@@ -1,7 +1,3 @@
-git clone https://github.com/Fallout-London/FOLON-FO4Downgrader.git
-
-cd FOLON-FO4Downgrader
-
 python -m venv .venv
 
 source venv/bin/activate
