@@ -900,7 +900,7 @@ if __name__ == "__main__":
         required=False,
         metavar="",
         type=directory,
-        help="Path to steam(The directory containing a SteamApps folder)",
+        help="Path to steam(The directory containing a Fallout4.exe file)",
     )
     parser.add_argument(
         "-c",
