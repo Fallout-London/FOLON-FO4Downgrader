@@ -56,7 +56,9 @@ def SetupSteam():
         if Util.IsWindows():
             url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip"
         else:
-            url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
+            url = (
+                "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
+            )
 
         with urllib.request.urlopen(url) as dl_file:
             with open("FOLON-Downgrader-Files/steam.zip", "wb") as out_file:
@@ -65,9 +67,9 @@ def SetupSteam():
         with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
             zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
         os.remove("FOLON-Downgrader-Files/steam.zip")
-    
+
     Steam = pexpect.popen_spawn.PopenSpawn(
-        'FOLON-Downgrader-Files/SteamFiles/steamcmd.exe +quit',
+        "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe +quit",
         logfile=sys.stdout.buffer,
         timeout=500,
     )
@@ -79,6 +81,7 @@ def SetupSteam():
     )
     if index == 0:
         return
+
 
 class MainWindow(QMainWindow):
     def __init__(self, steampath=None):
@@ -336,6 +339,7 @@ class MainWindow(QMainWindow):
 
     def tab2UI(self):  # GUI
         self.FinishedLogging = False
+        self.SteamGuardCode = ""
 
         layout = QFormLayout()
 
@@ -348,9 +352,7 @@ class MainWindow(QMainWindow):
             )
         )
         layout.addRow(
-            QLabel(
-                "<p>If you have ' or \" in it please preface it with \\.</p>"
-            )
+            QLabel("<p>If you have ' or \" in it please preface it with \\.</p>")
         )
 
         self.UsernameEntry = QLineEdit()
@@ -427,13 +429,9 @@ class MainWindow(QMainWindow):
 
         if Util.IsWritable("FOLON-Downgrader-Files/SteamFiles"):
             if Util.IsWindows():
-                self.DepotDownloader = (
-                    "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe"
-                )
+                self.DepotDownloader = "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe"
             else:
-                self.DepotDownloader = (
-                    "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh"
-                )
+                self.DepotDownloader = "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh"
                 if os.path.isfile(self.DepotDownloader):
                     st = os.stat(self.DepotDownloader)
                     os.chmod(
@@ -658,20 +656,20 @@ class MainWindow(QMainWindow):
         print(self.GuardEntry.text())
 
         p = subprocess.Popen(
-                [
-                    self.DepotDownloader,
-                    "+login",
-                    f'{self.Username}',
-                    f"{self.Password}",
-                    f"{self.GuardEntry.text()}",
-                    "+quit",
-                ],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-            )
-        Code = self.GuardEntry.text()
+            [
+                self.DepotDownloader,
+                "+login",
+                f"{self.Username}",
+                f"{self.Password}",
+                f"{self.GuardEntry.text()}",
+                "+quit",
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+        )
+        self.SteamGuardCode = self.GuardEntry.text()
         output = p.communicate()[0].decode("UTF-8")
-        if  "Steam Public...OK" in output:
+        if "Steam Public...OK" in output:
             Settings["LoginResult"] = "Success"
             Util.Write_Settings(Settings)
         elif "rate limit" in output:
@@ -718,7 +716,6 @@ class MainWindow(QMainWindow):
     ##########################################################################################
 
     def tab3UI(self):  # GUI
-        self.DownloadIndex = 0
         self.SteamFiles = "FOLON-Downgrader-Files/SteamFiles/depots"
         self.Downloaded = 0
         layout = QFormLayout()
@@ -743,9 +740,13 @@ class MainWindow(QMainWindow):
         self.tab3.setLayout(layout)
 
     def InstallInit(self):
+        Settings = Util.Read_Settings()
+        if Settings["LoginResult"] == "Rate":
+            self.OpenRateDialog()
+            return
         if self.Downloaded == 0:
             self.Loading(
-                lambda: self.Install(self.DownloadIndex),
+                self.Install,
                 text=f"Downloading depots",
                 PostFunction=self.InstallInit,
             )
@@ -756,38 +757,63 @@ class MainWindow(QMainWindow):
                 PostFunction=self.InstallInit,
             )
         elif self.Downloaded == 2:
+            self.Loading(
+                self.RemoveHD,
+                text=f"Removing Texture Pack DLC",
+                PostFunction=self.InstallInit,
+            )
+        elif self.Downloaded == 3:
             self.activate_tab_4()
 
-    def Install(self, index):
-        self.Steam = pexpect.popen_spawn.PopenSpawn(
-            f'{self.DepotDownloader} +force_install_dir "{self.SteamPath}" +login "{self.Username}" "{self.Password}" +runscript "FOLON-Downgrader-Files/DepotsList.txt" +validate +quit',
-            logfile=sys.stdout.buffer,
-            timeout=None,
-        )
-        self.Wait3()
+    def Install(self):
+        FilePath = "./FOLON-Downgrader-Files/DepotsList.txt"
+        with open(FilePath, "r") as file:
+            lines = file.readlines()
 
-    def Wait3(self):
-        index = self.Steam.expect(
+        with open(FilePath, "w") as file:
+            file.write(f'force_install_dir "{self.SteamPath}"\n')
+            if self.SteamGuardCode == "":
+                file.write(f'login "{self.Username}" "{self.Password}"\n')
+            else:
+                file.write(f'login "{self.Username}" "{self.Password}" "{self.SteamGuardCode}"\n')
+            file.writelines(lines)
+
+        p = subprocess.Popen(
             [
-                "Disconnected from Steam",
-                "(Rate Limit Exceeded)",
-                pexpect.TIMEOUT,
+                self.DepotDownloader,
+                "+runscript",
+                f'{FilePath}',
+                "+validate",
+                "+quit",
             ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
         )
-        if index == 0:
-            self.DownloadIndex += 1
-            if self.DownloadIndex == len(self.Depots):
-                self.Downloaded += 1
-        elif index == 1:
-            Settings["InstallResult"] = "Rate"
+            
+        
+        output = p.communicate()[0].decode("UTF-8")
+        print(output)
+        if "Rate Limit" in output:
+            Settings["LoginResult"] = "Rate"
             Util.Write_Settings(Settings)
-        elif index == 2:
-            Settings["InstallResult"] = "Rate"
-            Util.Write_Settings(Settings)
+        else:
+            self.Downloaded = 1
+        
+        with open(FilePath, "r") as file:
+            data = file.read().splitlines(True)
+
+        with open(FilePath, "w") as file:
+            file.writelines(data[2:])
 
     def RemoveCC(self):
         for i in os.listdir(self.SteamPath + "/Data"):
             if i[:2] == "cc":
+                os.remove(self.SteamPath + "/Data/" + i)
+        self.Downloaded += 1
+    
+    def RemoveHD(self):
+        for i in os.listdir(self.SteamPath + "/Data"):
+            if i[:22] == "DLCUltraHighResolution":
                 os.remove(self.SteamPath + "/Data/" + i)
         self.Downloaded += 1
 
