@@ -334,9 +334,7 @@ class MainWindow(QMainWindow):
             )
         )
         layout.addRow(
-            QLabel(
-                "<p>If you have ' or \" in it please preface it with \.</p>"
-            )
+            QLabel("<p>If you have ' or \" in it please preface it with \\.</p>")
         )
 
         self.UsernameEntry = QLineEdit()
