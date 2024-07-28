@@ -12,6 +12,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
 from QLines import *
 import argparse
 import pexpect.popen_spawn
+import subprocess
 import urllib.request, zipfile, io
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
@@ -441,47 +442,37 @@ class MainWindow(QMainWindow):
                     )
 
         if os.path.isfile(self.DepotDownloader):
-            self.Steam = pexpect.popen_spawn.PopenSpawn(
-                f'{self.DepotDownloader} +login "{self.Username}" "{self.Password}" +download_depot "377160" "377162" "5847529232406005096" +force_install_dir "FOLON-Downgrader-Files" +quit',
-                logfile=sys.stdout.buffer,
-                timeout=120,
+            p = subprocess.Popen(
+                [
+                    self.DepotDownloader,
+                    "+login",
+                    f"{self.Username}",
+                    f"{self.Password}",
+                    "+quit",
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
             )
-
-            self.Wait()
-
-    def Wait(self):
-        index = self.Steam.expect(
-            [
-                pexpect.EOF,
-                "set_steam_guard_code",
-                "Steam Mobile App",
-                "(Rate Limit Exceeded)",
-                "(Invalid Login Auth Code).",
-                "(Invalid Password)",
-                pexpect.TIMEOUT,
-            ],
-        )
-        if index == 0:
-            Settings["LoginResult"] = "Success"
-            Util.Write_Settings(Settings)
-        elif index == 1:
-            Settings["LoginResult"] = "Guard"
-            Util.Write_Settings(Settings)
-        elif index == 2:
-            Settings["LoginResult"] = "Guard2"
-            Util.Write_Settings(Settings)
-        elif index == 3:
-            Settings["LoginResult"] = "Rate"
-            Util.Write_Settings(Settings)
-        elif index == 4:
-            Settings["LoginResult"] = "PasswordFail"
-            Util.Write_Settings(Settings)
-        elif index == 5:
-            Settings["LoginResult"] = "PasswordFail"
-            Util.Write_Settings(Settings)
-        else:
-            Settings["LoginResult"] = "PasswordFail"
-            Util.Write_Settings(Settings)
+            p.communicate(b"quit")
+            output = p.communicate()[0].decode("utf-8")
+            if "Steam Public...OK" in output:
+                Settings["LoginResult"] = "Success"
+                Util.Write_Settings(Settings)
+            elif "set_steam_guard_code" in output:
+                Settings["LoginResult"] = "Guard"
+                Util.Write_Settings(Settings)
+            elif "Steam Mobile App" in output:
+                Settings["LoginResult"] = "Guard2"
+                Util.Write_Settings(Settings)
+            elif "(Rate Limit Exceeded)" in output:
+                Settings["LoginResult"] = "Rate"
+                Util.Write_Settings(Settings)
+            elif "(Invalid Login Auth Code)" in output:
+                Settings["LoginResult"] = "PasswordFail"
+                Util.Write_Settings(Settings)
+            elif "(Invalid Password)" in output:
+                Settings["LoginResult"] = "PasswordFail"
+                Util.Write_Settings(Settings)
 
     def LoginPopups(self):  # Steam
         Settings = Util.Read_Settings()
@@ -664,42 +655,28 @@ class MainWindow(QMainWindow):
         )
 
     def GuardSubmit(self):  # Steam
-        Settings = Util.Read_Settings()
-        Username = self.Username
-        Password = self.Password
         print(self.GuardEntry.text())
 
-        self.Steam = pexpect.popen_spawn.PopenSpawn(
-            f'{self.DepotDownloader} +login "{self.Username}" "{self.Password}" "{self.GuardEntry.text()}" +download_depot "377160" "377162" "5847529232406005096" +force_install_dir "FOLON-Downgrader-Files" +quit',
-            logfile=sys.stdout.buffer,
-            timeout=120,
-        )
-
-        print("Wait 2 started")
-        index = self.Steam.expect(
-            [
-                "Done!",
-                "incorrect",
-                "(Rate Limit Exceeded)",
-                "Steam Failed",
-                pexpect.TIMEOUT,
-            ],
-        )
-        if index == 0:
+        p = subprocess.Popen(
+                [
+                    self.DepotDownloader,
+                    "+login",
+                    f'{self.Username}',
+                    f"{self.Password}",
+                    f"{self.GuardEntry.text()}",
+                    "+quit",
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+            )
+        Code = self.GuardEntry.text()
+        output = p.communicate()[0].decode("UTF-8")
+        if  "Steam Public...OK" in output:
             Settings["LoginResult"] = "Success"
             Util.Write_Settings(Settings)
-        elif index == 1:
-            Settings["LoginResult"] = "Guard"
-            Util.Write_Settings(Settings)
-        elif index == 2:
+        elif "rate limit" in output:
             Settings["LoginResult"] = "Rate"
             Util.Write_Settings(Settings)
-        elif index == 3:
-            self.GuardSubmit()
-        elif index == 4:
-            Settings["LoginResult"] = "Rate"
-            Util.Write_Settings(Settings)
-        print("Wait 2 ended")
 
     def OpenRateDialog(self):  # GUI
         try:
@@ -782,9 +759,8 @@ class MainWindow(QMainWindow):
             self.activate_tab_4()
 
     def Install(self, index):
-        self.Steam.timeout = None
         self.Steam = pexpect.popen_spawn.PopenSpawn(
-            f'{self.DepotDownloader} -username "{self.Username}" -remember-password -app 377160 -depot 377161 377162 377163 377164 435880 435870 435871 -manifest 7497069378349273908 5847529232406005096 5819088023757897745 2178106366609958945 1255562923187931216 1691678129192680960 5106118861901111234 -dir "{self.SteamPath}" -validate',
+            f'{self.DepotDownloader} +force_install_dir "{self.SteamPath}" +login "{self.Username}" "{self.Password}" +runscript "FOLON-Downgrader-Files/DepotsList.txt" +validate +quit',
             logfile=sys.stdout.buffer,
             timeout=None,
         )
@@ -794,7 +770,7 @@ class MainWindow(QMainWindow):
         index = self.Steam.expect(
             [
                 "Disconnected from Steam",
-                "RateLimitExceeded",
+                "(Rate Limit Exceeded)",
                 pexpect.TIMEOUT,
             ],
         )
