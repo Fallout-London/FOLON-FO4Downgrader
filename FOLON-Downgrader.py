@@ -53,9 +53,9 @@ def SetupSteam():
 
     if not os.path.isdir("FOLON-Downgrader-Files/SteamFiles"):
         if Util.IsWindows():
-            url = "https://github.com/coffandro/DepotDownloader/releases/download/release/DepotDownloader-windows-x64.zip"
+            url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip"
         else:
-            url = "https://github.com/coffandro/DepotDownloader/releases/download/release/DepotDownloader-linux-x64.zip"
+            url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
 
         with urllib.request.urlopen(url) as dl_file:
             with open("FOLON-Downgrader-Files/steam.zip", "wb") as out_file:
@@ -64,7 +64,20 @@ def SetupSteam():
         with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
             zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
         os.remove("FOLON-Downgrader-Files/steam.zip")
+    
+    Steam = pexpect.popen_spawn.PopenSpawn(
+        'FOLON-Downgrader-Files/SteamFiles/steamcmd.exe +quit',
+        logfile=sys.stdout.buffer,
+        timeout=500,
+    )
 
+    index = Steam.expect(
+        [
+            pexpect.EOF,
+        ],
+    )
+    if index == 0:
+        return
 
 class MainWindow(QMainWindow):
     def __init__(self, steampath=None):
@@ -335,7 +348,7 @@ class MainWindow(QMainWindow):
         )
         layout.addRow(
             QLabel(
-                "<p>If you have ' or \" in it please preface it with \.</p>"
+                "<p>If you have ' or \" in it please preface it with \\.</p>"
             )
         )
 
@@ -414,11 +427,11 @@ class MainWindow(QMainWindow):
         if Util.IsWritable("FOLON-Downgrader-Files/SteamFiles"):
             if Util.IsWindows():
                 self.DepotDownloader = (
-                    "FOLON-Downgrader-Files/SteamFiles/DepotDownloader.exe"
+                    "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe"
                 )
             else:
                 self.DepotDownloader = (
-                    "FOLON-Downgrader-Files/SteamFiles/DepotDownloader"
+                    "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh"
                 )
                 if os.path.isfile(self.DepotDownloader):
                     st = os.stat(self.DepotDownloader)
@@ -429,7 +442,7 @@ class MainWindow(QMainWindow):
 
         if os.path.isfile(self.DepotDownloader):
             self.Steam = pexpect.popen_spawn.PopenSpawn(
-                f'{self.DepotDownloader} -username "{self.Username}" -password "{self.Password}" -remember-password -app 377160 -depot 377162 -dir FOLON-Downgrader-Files/SteamFiles',
+                f'{self.DepotDownloader} +login "{self.Username}" "{self.Password}" +download_depot "377160" "377162" "5847529232406005096" +force_install_dir "FOLON-Downgrader-Files" +quit',
                 logfile=sys.stdout.buffer,
                 timeout=120,
             )
@@ -440,11 +453,11 @@ class MainWindow(QMainWindow):
         index = self.Steam.expect(
             [
                 pexpect.EOF,
-                "auth code sent",
+                "set_steam_guard_code",
                 "Steam Mobile App",
-                "RateLimitExceeded",
-                "InvalidPassword.",
-                "Steam failed",
+                "(Rate Limit Exceeded)",
+                "(Invalid Login Auth Code).",
+                "(Invalid Password)",
                 pexpect.TIMEOUT,
             ],
         )
@@ -656,14 +669,18 @@ class MainWindow(QMainWindow):
         Password = self.Password
         print(self.GuardEntry.text())
 
-        self.Steam.sendline(f"{self.GuardEntry.text()}\n")
+        self.Steam = pexpect.popen_spawn.PopenSpawn(
+            f'{self.DepotDownloader} +login "{self.Username}" "{self.Password}" "{self.GuardEntry.text()}" +download_depot "377160" "377162" "5847529232406005096" +force_install_dir "FOLON-Downgrader-Files" +quit',
+            logfile=sys.stdout.buffer,
+            timeout=120,
+        )
 
         print("Wait 2 started")
         index = self.Steam.expect(
             [
                 "Done!",
                 "incorrect",
-                "RateLimitExceeded",
+                "(Rate Limit Exceeded)",
                 "Steam Failed",
                 pexpect.TIMEOUT,
             ],
