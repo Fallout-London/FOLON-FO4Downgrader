@@ -333,6 +333,11 @@ class MainWindow(QMainWindow):
                 "<p>To downgrade Fallout 4 we will need to download files via Steam, please login to do so.</p>"
             )
         )
+        layout.addRow(
+            QLabel(
+                "<p>If you have ' or \" in it please preface it with \.</p>"
+            )
+        )
 
         self.UsernameEntry = QLineEdit()
         self.UsernameEntry.returnPressed.connect(self.GoToPassword)
@@ -719,18 +724,6 @@ class MainWindow(QMainWindow):
     ##########################################################################################
 
     def tab3UI(self):  # GUI
-        self.Depots = [
-            # Main game
-            [377161, 7497069378349273908],
-            [377162, 5847529232406005096],
-            [377163, 5819088023757897745],
-            [377164, 2178106366609958945],
-            # Workshops
-            [435880, 1255562923187931216],
-            # Automatron
-            [435870, 1691678129192680960],
-            [435871, 5106118861901111234],
-        ]
         self.DownloadIndex = 0
         self.SteamFiles = "FOLON-Downgrader-Files/SteamFiles/depots"
         self.Downloaded = 0
@@ -756,10 +749,10 @@ class MainWindow(QMainWindow):
         self.tab3.setLayout(layout)
 
     def InstallInit(self):
-        if self.DownloadIndex < len(self.Depots):
+        if self.Downloaded == 0:
             self.Loading(
                 lambda: self.Install(self.DownloadIndex),
-                text=f"Downloading depot[{self.DownloadIndex+1}/{len(self.Depots)}]",
+                text=f"Downloading depots",
                 PostFunction=self.InstallInit,
             )
         elif self.Downloaded == 1:
@@ -774,7 +767,7 @@ class MainWindow(QMainWindow):
     def Install(self, index):
         self.Steam.timeout = None
         self.Steam = pexpect.popen_spawn.PopenSpawn(
-            f'{self.DepotDownloader} -username "{self.Username}" -remember-password -app 377160 -depot {self.Depots[index][0]} -manifest "{self.Depots[index][1]}" -dir "{self.SteamPath}" -validate',
+            f'{self.DepotDownloader} -username "{self.Username}" -remember-password -app 377160 -depot 377161 377162 377163 377164 435880 435870 435871 -manifest 7497069378349273908 5847529232406005096 5819088023757897745 2178106366609958945 1255562923187931216 1691678129192680960 5106118861901111234 -dir "{self.SteamPath}" -validate',
             logfile=sys.stdout.buffer,
             timeout=None,
         )
