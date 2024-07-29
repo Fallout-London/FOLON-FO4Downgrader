@@ -771,6 +771,8 @@ class MainWindow(QMainWindow):
             lines = file.readlines()
 
         with open(FilePath, "w") as file:
+            file.write("@ShutdownOnFailedCommand 1\n")
+            file.write("@NoPromptForPassword 1\n")
             file.write(f'force_install_dir "{self.SteamPath}"\n')
             if self.SteamGuardCode == "":
                 file.write(f'login "{self.Username}" "{self.Password}"\n')
@@ -782,7 +784,7 @@ class MainWindow(QMainWindow):
             [
                 self.DepotDownloader,
                 "+runscript",
-                f'{FilePath}',
+                '../DepotsList.txt',
                 "+validate",
                 "+quit",
             ],
@@ -803,7 +805,7 @@ class MainWindow(QMainWindow):
             data = file.read().splitlines(True)
 
         with open(FilePath, "w") as file:
-            file.writelines(data[2:])
+            file.writelines(data[4:])
 
     def RemoveCC(self):
         for i in os.listdir(self.SteamPath + "/Data"):
