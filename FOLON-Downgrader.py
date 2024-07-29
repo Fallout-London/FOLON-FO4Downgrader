@@ -813,8 +813,8 @@ class MainWindow(QMainWindow):
             file.writelines(data[3:])
     
     def MoveFiles(self):
-        for i in listdir("FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"):
-            Util.MoveFiles(f"FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160{i}", self.SteamPath)
+        for i in os.listdir("FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"):
+            Util.MoveFiles(f"FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160/{i}", self.SteamPath)
         self.Downloaded += 1
 
     def RemoveCC(self):
