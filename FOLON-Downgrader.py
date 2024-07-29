@@ -676,6 +676,40 @@ class MainWindow(QMainWindow):
             Settings["LoginResult"] = "Rate"
             Util.Write_Settings(Settings)
 
+    def OpenStorageDialog(self):  # GUI
+        try:
+            self.SteamGDlg.close()
+        except:
+            pass
+        try:
+            self.GuideDialog.close()
+        except:
+            pass
+        self.StorageDialog = QDialog()
+        StorageDialogLayout = QFormLayout()
+        StorageDialogLayout.addRow(QLabel("<h1>Not enough storage</h1>"))
+        StorageDialogLayout.addRow(
+            QLabel(
+                "<p>You do not have enough storage on the drive with the downgrader,</p>"
+            )
+        )
+        StorageDialogLayout.addRow(
+            QLabel("<p>please move it to one with at least 28gb free.</p>")
+        )
+        StorageDialogLayout.addRow(
+            QLabel("<p>(It does not matter if it's the one with Fallout 4 on it)</p>")
+        )
+
+        StorageDialogButton = QPushButton(text="Return")
+        StorageDialogButton.pressed.connect(self.CloseStorageDialog)
+        StorageDialogLayout.addRow(StorageDialogButton)
+
+        self.StorageDialog.setLayout(StorageDialogLayout)
+        self.StorageDialog.exec()
+
+    def CloseStorageDialog(self):
+        self.StorageDialog.close()
+
     def OpenRateDialog(self):  # GUI
         try:
             self.SteamGDlg.close()
@@ -907,6 +941,11 @@ def main(steampath=None):
     CSSFile = Util.resource_path("FOLON.css")
     with open(CSSFile, "r") as fh:
         app.setStyleSheet(fh.read())
+
+    if Util.bytesto(shutil.disk_usage(".")[2], "g") < 28:
+        MainWindow().OpenStorageDialog()
+        return
+
     SetupFont()
     if steampath != None:
         ex = MainWindow(steampath)

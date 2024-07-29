@@ -171,6 +171,7 @@ def oops(type, value, tb):
     showerror("Error", "\n".join(traceback.format_exception(type, value, tb)))
     sys.exit(1)
 
+
 def MoveFiles(srcdir, dstdir):
     from os import path, listdir, mkdir
     from shutil import move, rmtree
@@ -179,16 +180,16 @@ def MoveFiles(srcdir, dstdir):
     if not path.isdir(dstdir):
         mkdir(dstdir)
 
-    for a in listdir(srcdir):        
+    for a in listdir(srcdir):
         if path.isdir(f"{srcdir}/{a}"):
             if not path.isdir(f"{dstdir}/{a}"):
                 mkdir(f"{dstdir}/{a}")
-            
-            for b in listdir(f"{srcdir}/{a}"):                
+
+            for b in listdir(f"{srcdir}/{a}"):
                 if path.isdir(f"{srcdir}/{a}/{b}"):
                     if not path.isdir(f"{dstdir}/{a}/{b}"):
                         mkdir(f"{dstdir}/{a}/{b}")
-                    
+
                     for c in listdir(f"{srcdir}/{a}/{b}"):
                         move(
                             f"{srcdir}/{a}/{b}/{c}",
@@ -204,12 +205,26 @@ def MoveFiles(srcdir, dstdir):
                     )
                     print(f"moved: {a}/{b}")
         else:
-            move(
-                f"{srcdir}/{a}", f"{dstdir}/{a}"
-            )
+            move(f"{srcdir}/{a}", f"{dstdir}/{a}")
         print("moved:", a)
     rmtree(srcdir)
     print("Finished:", srcdir)
+
+
+def bytesto(bytes, to, bsize=1024):
+    """convert bytes to megabytes, etc.
+    sample code:
+        print('mb= ' + str(bytesto(314575262000000, 'm')))
+    sample output:
+        mb= 300002347.946
+    """
+
+    a = {"k": 1, "m": 2, "g": 3, "t": 4, "p": 5, "e": 6}
+    r = float(bytes)
+    for i in range(a[to.lower()]):
+        r = r / bsize
+
+    return r
 
 
 def IsBinaryAvilable(Binary):
