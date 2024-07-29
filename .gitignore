@@ -10,3 +10,4 @@
 test.py
 *.zip
 certificate.pfx
+*.code-workspace
