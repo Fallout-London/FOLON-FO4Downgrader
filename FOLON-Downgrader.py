@@ -782,22 +782,23 @@ class MainWindow(QMainWindow):
             if self.SteamGuardCode == "":
                 file.write(f'login "{self.Username}" "{self.Password}"\n')
             else:
-                file.write(f'login "{self.Username}" "{self.Password}" "{self.SteamGuardCode}"\n')
+                file.write(
+                    f'login "{self.Username}" "{self.Password}" "{self.SteamGuardCode}"\n'
+                )
             file.writelines(lines)
 
         p = subprocess.Popen(
             [
                 self.DepotDownloader,
                 "+runscript",
-                '../DepotsList.txt',
+                "../DepotsList.txt",
                 "+validate",
                 "+quit",
             ],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
-            
-        
+
         output = p.communicate()[0].decode("UTF-8")
         print(output)
         if "Rate Limit" in output:
@@ -805,16 +806,21 @@ class MainWindow(QMainWindow):
             Util.Write_Settings(Settings)
         else:
             self.Downloaded = 1
-        
+
         with open(FilePath, "r") as file:
             data = file.read().splitlines(True)
 
         with open(FilePath, "w") as file:
             file.writelines(data[3:])
-    
+
     def MoveFiles(self):
-        for i in os.listdir("FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"):
-            Util.MoveFiles(f"FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160/{i}", self.SteamPath)
+        for i in os.listdir(
+            "FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"
+        ):
+            Util.MoveFiles(
+                f"FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160/{i}",
+                self.SteamPath,
+            )
         self.Downloaded += 1
 
     def RemoveCC(self):
@@ -822,7 +828,7 @@ class MainWindow(QMainWindow):
             if i[:2] == "cc":
                 os.remove(self.SteamPath + "/Data/" + i)
         self.Downloaded += 1
-    
+
     def RemoveHD(self):
         for i in os.listdir(self.SteamPath + "/Data"):
             if i[:22] == "DLCUltraHighResolution":
