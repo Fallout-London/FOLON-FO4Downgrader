@@ -171,6 +171,46 @@ def oops(type, value, tb):
     showerror("Error", "\n".join(traceback.format_exception(type, value, tb)))
     sys.exit(1)
 
+def MoveFiles(srcdir, dstdir):
+    from os import path, listdir, mkdir
+    from shutil import move, rmtree
+
+    print("Started:", srcdir)
+    if not path.isdir(dstdir):
+        mkdir(dstdir)
+
+    for a in listdir(srcdir):        
+        if path.isdir(f"{srcdir}/{a}"):
+            if not path.isdir(f"{dstdir}/{a}"):
+                mkdir(f"{dstdir}/{a}")
+            
+            for b in listdir(f"{srcdir}/{a}"):                
+                if path.isdir(f"{srcdir}/{a}/{b}"):
+                    if not path.isdir(f"{dstdir}/{a}/{b}"):
+                        mkdir(f"{dstdir}/{a}/{b}")
+                    
+                    for c in listdir(f"{srcdir}/{a}/{b}"):
+                        move(
+                            f"{srcdir}/{a}/{b}/{c}",
+                            f"{dstdir}/{a}/{b}/{c}",
+                        )
+                        print(f"moved: {a}/{b}/{c}")
+                else:
+                    if not path.isdir(f"{dstdir}/{a}"):
+                        mkdir(f"{dstdir}/{a}")
+                    move(
+                        f"{srcdir}/{a}/{b}",
+                        f"{dstdir}/{a}/{b}",
+                    )
+                    print(f"moved: {a}/{b}")
+        else:
+            move(
+                f"{srcdir}/{a}", f"{dstdir}/{a}"
+            )
+        print("moved:", a)
+    rmtree(srcdir)
+    print("Finished:", srcdir)
+
 
 def IsBinaryAvilable(Binary):
     try:
@@ -190,8 +230,5 @@ if __name__ == "__main__":
     print(WhereSteam())
     print(CountFiles("."))
     print(resource_path("."))
-    from os import listdir, walk
-
-    print(listdir(resource_path(".")))
     print(IsBundled())
     print(IsWindows())

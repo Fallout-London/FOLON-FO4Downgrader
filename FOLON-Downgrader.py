@@ -747,22 +747,28 @@ class MainWindow(QMainWindow):
         if self.Downloaded == 0:
             self.Loading(
                 self.Install,
-                text=f"Downloading depots",
+                text=f"Downloading depots, grab a cuppa tea, innit'",
                 PostFunction=self.InstallInit,
             )
         elif self.Downloaded == 1:
+            self.Loading(
+                self.MoveFiles,
+                text=f"Moving files to {self.SteamPath}",
+                PostFunction=self.InstallInit,
+            )
+        elif self.Downloaded == 2:
             self.Loading(
                 self.RemoveCC,
                 text=f"Removing Creation Club content",
                 PostFunction=self.InstallInit,
             )
-        elif self.Downloaded == 2:
+        elif self.Downloaded == 3:
             self.Loading(
                 self.RemoveHD,
                 text=f"Removing Texture Pack DLC",
                 PostFunction=self.InstallInit,
             )
-        elif self.Downloaded == 3:
+        elif self.Downloaded == 4:
             self.activate_tab_4()
 
     def Install(self):
@@ -773,7 +779,6 @@ class MainWindow(QMainWindow):
         with open(FilePath, "w") as file:
             file.write("@ShutdownOnFailedCommand 1\n")
             file.write("@NoPromptForPassword 1\n")
-            file.write(f'force_install_dir "{self.SteamPath}"\n')
             if self.SteamGuardCode == "":
                 file.write(f'login "{self.Username}" "{self.Password}"\n')
             else:
@@ -805,7 +810,12 @@ class MainWindow(QMainWindow):
             data = file.read().splitlines(True)
 
         with open(FilePath, "w") as file:
-            file.writelines(data[4:])
+            file.writelines(data[3:])
+    
+    def MoveFiles(self):
+        for i in listdir("FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"):
+            Util.MoveFiles(f"FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160{i}", self.SteamPath)
+        self.Downloaded += 1
 
     def RemoveCC(self):
         for i in os.listdir(self.SteamPath + "/Data"):
