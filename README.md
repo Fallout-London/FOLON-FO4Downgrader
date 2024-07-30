@@ -4,7 +4,11 @@ If you do not trust it there's a [document Here](./Manually.md) which guides you
 
 On linux This requires qt and curl to be installed, how it is installed depends on your distro, but it should work on windows out of the box.
 
-To run this [get a binary from Releases](https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/latest) for your OS.
+To run this [get a binary from Releases](https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/latest) for windows or run the following on Linux.
+
+```
+git clone https://github.com/Fallout-London/FOLON-FO4Downgrader.git && cd FOLON-FO4Downgrader && chmod +x Run.sh && ./Run.sh
+```
 
 ## Issues with Steam Authenticator?
 If you tried to sign in with your Steam username and password, but are stuck at being asked for your Steam Guard code in the console window, try:
