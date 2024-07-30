@@ -1,6 +1,6 @@
 import os, inspect, sys
 
-from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QGraphicsOpacityEffect
+from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QGraphicsOpacityEffect, QProgressBar
 from PyQt5.QtCore import QSize, Qt, QThread, QTimer
 from PyQt5.QtGui import QMovie, QPalette, QColor
 import Utility as Util
@@ -11,6 +11,8 @@ class LoadingTranslucentScreen(QWidget):
         self,
         parent: QWidget,
         description_text: str = "",
+        ProgressDir: str = "",
+        ProgressMax: int = 0,
         SlowRoll: bool = False,
         dot_animation: bool = True,
     ):
@@ -20,6 +22,8 @@ class LoadingTranslucentScreen(QWidget):
         self.__parent.resizeEvent = self.resizeEvent
 
         self.__dot_animation_flag = dot_animation
+        self.__ProgressDir = ProgressDir
+        self.__ProgressMax = ProgressMax
 
         self.__descriptionLbl_original_text = description_text
 
@@ -47,6 +51,15 @@ class LoadingTranslucentScreen(QWidget):
                 "QLabel { background: transparent; color: black; }"
             )
             self.__descriptionLbl.setAlignment(Qt.AlignVCenter | Qt.AlignCenter)
+        
+        self.__LoadingBar = QProgressBar(self)
+        self.__LoadingBar.setVisible(False)
+        if self.__ProgressDir.strip() != "":
+            self.__LoadingBar.setStyleSheet(
+                "QLabel { background: transparent; color: black; }"
+            )
+            self.__LoadingBar.setAlignment(Qt.AlignVCenter | Qt.AlignCenter)
+            self.__LoadingBar.setRange(0, self.__ProgressMax)
 
         lay = QGridLayout()
         lay.setContentsMargins(0, 0, 0, 0)
@@ -78,6 +91,12 @@ class LoadingTranslucentScreen(QWidget):
             self.__descriptionLbl.setText(self.__descriptionLbl_original_text + dot)
         else:
             self.__descriptionLbl.setText(cur_text + dot)
+        if self.__ProgressDir != "":
+            value = len(os.listdir(self.__ProgressDir))-1
+            if value < 1:
+                self.__LoadingBar.setValue(0)
+            else:
+                self.__LoadingBar.setValue(value)
 
     def setParentThread(self, parent_thread: QThread):
         self.__thread = parent_thread
@@ -86,21 +105,29 @@ class LoadingTranslucentScreen(QWidget):
         lay = self.layout()
         if direction == "Left":
             lay.addWidget(self.__descriptionLbl, 0, 0, 1, 1)
+            lay.addWidget(self.__LoadingBar, 0, 1, 1, 1)
             lay.addWidget(self.__movieLbl, 0, 1, 1, 1)
         elif direction == "Top":
             lay.addWidget(self.__descriptionLbl, 0, 0, 1, 1)
-            lay.addWidget(self.__movieLbl, 1, 0, 1, 1)
+            lay.addWidget(self.__LoadingBar, 2, 0, 1, 1)
+            lay.addWidget(self.__movieLbl, 2, 0, 1, 1)
         elif direction == "Right":
             lay.addWidget(self.__movieLbl, 0, 0, 1, 1)
             lay.addWidget(self.__descriptionLbl, 0, 1, 1, 1)
+            lay.addWidget(self.__LoadingBar, 0, 0, 1, 1)
         elif direction == "Bottom":
             lay.addWidget(self.__movieLbl, 0, 0, 1, 1)
             lay.addWidget(self.__descriptionLbl, 1, 0, 1, 1)
+            lay.addWidget(self.__LoadingBar, 0, 0, 1, 1)
         else:
             raise BaseException("Invalid direction.")
 
     def start(self):
-        self.__loading_mv.start()
+        self.__descriptionLbl.setVisible(True)
+        if self.__ProgressDir != "":
+            self.__LoadingBar.setVisible(True)
+        else:
+            self.__loading_mv.start()
         self.__descriptionLbl.setVisible(True)
         self.raise_()
 
