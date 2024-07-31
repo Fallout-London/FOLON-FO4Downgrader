@@ -87,22 +87,25 @@ class LoadingTranslucentScreen(QWidget):
             self.__timer.timeout.connect(self.__ticking)
             self.__timer.singleShot(0, self.__ticking)
             self.__timer.start(500)
+        if self.__ProgressDir != "":
+            self.__timer2 = QTimer(self)
+            self.__timer2.timeout.connect(self.__ticking2)
+            self.__timer2.singleShot(0, self.__ticking2)
+            self.__timer2.start(2000)
+
+    def __ticking2(self):
+        value = sum([len(files) for r, d, files in os.walk(self.__ProgressDir)])
+        self.__LoadingBar.setFormat(f"{value} / {self.__ProgressMax}")
+        self.__LoadingBar.setValue(value)
 
     def __ticking(self):
         dot = "."
         cur_text = self.__descriptionLbl.text()
         cnt = cur_text.count(dot)
-        Settings = Util.Read_Settings()
         if cnt % 3 == 0 and cnt != 0:
             self.__descriptionLbl.setText(self.__descriptionLbl_original_text + dot)
         else:
             self.__descriptionLbl.setText(cur_text + dot)
-        if self.__ProgressDir != "":
-            value = len(os.listdir(self.__ProgressDir)) - 1
-            if value < 1:
-                self.__LoadingBar.setValue(0)
-            else:
-                self.__LoadingBar.setValue(value)
 
     def setParentThread(self, parent_thread: QThread):
         self.__thread = parent_thread
