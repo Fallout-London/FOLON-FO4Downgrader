@@ -1,7 +1,7 @@
 import sys
 import Utility as Util
 
-#sys.excepthook = Util.oops
+# sys.excepthook = Util.oops
 
 import shutil
 import os
@@ -68,9 +68,7 @@ def SetupSteam():
             zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
         os.remove("FOLON-Downgrader-Files/steam.zip")
 
-    Steam = subprocess.Popen(
-        "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe +quit"
-    )
+    Steam = subprocess.Popen("FOLON-Downgrader-Files/SteamFiles/steamcmd.exe +quit")
 
 
 class MainWindow(QMainWindow):
@@ -189,7 +187,10 @@ class MainWindow(QMainWindow):
         UseResult=False,
     ):
         self.__loadingTranslucentScreen = LoadingTranslucentScreen(
-            parent=self, ProgressDir=ProgressDir, ProgressMax=ProgressMax, description_text=text
+            parent=self,
+            ProgressDir=ProgressDir,
+            ProgressMax=ProgressMax,
+            description_text=text,
         )
         self.__thread = ScreenThread(
             Function,
@@ -530,6 +531,9 @@ class MainWindow(QMainWindow):
         labelbox1.addWidget(
             QLabel("<p>To authorize your identity Steam has sent a code to your</p>")
         )
+        labelbox1.addWidget(
+            QLabel("<p><b>If it is incorrect it will crash the application</b></p>")
+        )
 
         SteamGDlgLayout.addItem(
             labelbox1,
@@ -577,7 +581,7 @@ class MainWindow(QMainWindow):
         self.SteamGDlg.setLayout(SteamGDlgLayout)
         self.GuardEntry.setFocus()
         self.SteamGDlg.exec()
-    
+
     def Guard2Submit(self):
         self.SteamGDlg.close()
         self.SteamGuardCode = self.GuardEntry.text()
@@ -769,7 +773,7 @@ class MainWindow(QMainWindow):
             self.GuideDialog.close()
         except:
             pass
-        
+
         self.Loading(
             self.GuardSubmit,
             text=f"Logging in",
@@ -901,7 +905,7 @@ class MainWindow(QMainWindow):
         layout.addRow(InstallButton)
 
         self.tab3.setLayout(layout)
-    
+
     def OpenDepotsDialog(self):  # GUI
         try:
             self.SteamGDlg.close()
@@ -915,23 +919,19 @@ class MainWindow(QMainWindow):
         DepotDialogLayout = QFormLayout()
         DepotDialogLayout.addRow(QLabel("<h1>Check steam before proceeding</h1>"))
         DepotDialogLayout.addRow(
-            QLabel(
-                "<p>You are about to download a large amount of data,</p>"
-            )
+            QLabel("<p>You are about to download a large amount of data,</p>")
         )
         DepotDialogLayout.addRow(
             QLabel("<p>please check steam if you own every dlc except</p>")
         )
-        DepotDialogLayout.addRow(
-            QLabel("<p>for the texture pack on steam.</p>")
-        )
+        DepotDialogLayout.addRow(QLabel("<p>for the texture pack on steam.</p>"))
 
         DepotDialogButton = QPushButton(text="Return")
         DepotDialogButton.pressed.connect(self.CloseDepotDialog)
 
         DepotSubmitButton = QPushButton(text="Continue")
         DepotSubmitButton.pressed.connect(self.InstallInit)
-        
+
         DepotDialogLayout.addRow(DepotDialogButton, DepotSubmitButton)
 
         self.DepotDialog.setLayout(DepotDialogLayout)
@@ -1012,7 +1012,7 @@ class MainWindow(QMainWindow):
 
         output = p.communicate()[0].decode("UTF-8")
         print(output)
-                
+
         if "Rate Limit" in output:
             Settings["LoginResult"] = "Rate"
             Util.Write_Settings(Settings)
