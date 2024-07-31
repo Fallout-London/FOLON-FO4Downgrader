@@ -344,7 +344,7 @@ class MainWindow(QMainWindow):
             )
         )
         layout.addRow(
-            QLabel(r"<p>If you have ' or \" in it please preface it with \\.</p>")
+            QLabel("<p>If you have ' or \" in it please preface it with \\.</p>")
         )
 
         self.UsernameEntry = QLineEdit()
@@ -1112,7 +1112,7 @@ if __name__ == "__main__":
         required=False,
         metavar="",
         type=directory,
-        help="Path to steam(The directory containing a SteamApps folder)",
+        help="Path to steam(The directory containing a Fallout4.exe file)",
     )
     parser.add_argument(
         "-c",
