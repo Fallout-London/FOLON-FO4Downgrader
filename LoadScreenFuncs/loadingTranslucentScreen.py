@@ -1,6 +1,12 @@
 import os, inspect, sys
 
-from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QGraphicsOpacityEffect
+from PyQt5.QtWidgets import (
+    QWidget,
+    QLabel,
+    QGridLayout,
+    QGraphicsOpacityEffect,
+    QProgressBar,
+)
 from PyQt5.QtCore import QSize, Qt, QThread, QTimer
 from PyQt5.QtGui import QMovie, QPalette, QColor
 import Utility as Util
@@ -11,6 +17,8 @@ class LoadingTranslucentScreen(QWidget):
         self,
         parent: QWidget,
         description_text: str = "",
+        ProgressDir: str = "",
+        ProgressMax: int = 0,
         SlowRoll: bool = False,
         dot_animation: bool = True,
     ):
@@ -20,6 +28,8 @@ class LoadingTranslucentScreen(QWidget):
         self.__parent.resizeEvent = self.resizeEvent
 
         self.__dot_animation_flag = dot_animation
+        self.__ProgressDir = ProgressDir
+        self.__ProgressMax = ProgressMax
 
         self.__descriptionLbl_original_text = description_text
 
@@ -48,6 +58,15 @@ class LoadingTranslucentScreen(QWidget):
             )
             self.__descriptionLbl.setAlignment(Qt.AlignVCenter | Qt.AlignCenter)
 
+        self.__LoadingBar = QProgressBar(self)
+        self.__LoadingBar.setVisible(False)
+        if self.__ProgressDir.strip() != "":
+            self.__LoadingBar.setStyleSheet(
+                "QLabel { background: transparent; color: black; }"
+            )
+            self.__LoadingBar.setAlignment(Qt.AlignVCenter | Qt.AlignCenter)
+            self.__LoadingBar.setRange(0, self.__ProgressMax)
+
         lay = QGridLayout()
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setAlignment(Qt.AlignVCenter | Qt.AlignCenter)
@@ -68,12 +87,21 @@ class LoadingTranslucentScreen(QWidget):
             self.__timer.timeout.connect(self.__ticking)
             self.__timer.singleShot(0, self.__ticking)
             self.__timer.start(500)
+        if self.__ProgressDir != "":
+            self.__timer2 = QTimer(self)
+            self.__timer2.timeout.connect(self.__ticking2)
+            self.__timer2.singleShot(0, self.__ticking2)
+            self.__timer2.start(2000)
+
+    def __ticking2(self):
+        value = sum([len(files) for r, d, files in os.walk(self.__ProgressDir)])
+        self.__LoadingBar.setFormat(f"{value} / {self.__ProgressMax}")
+        self.__LoadingBar.setValue(value)
 
     def __ticking(self):
         dot = "."
         cur_text = self.__descriptionLbl.text()
         cnt = cur_text.count(dot)
-        Settings = Util.Read_Settings()
         if cnt % 3 == 0 and cnt != 0:
             self.__descriptionLbl.setText(self.__descriptionLbl_original_text + dot)
         else:
@@ -86,21 +114,29 @@ class LoadingTranslucentScreen(QWidget):
         lay = self.layout()
         if direction == "Left":
             lay.addWidget(self.__descriptionLbl, 0, 0, 1, 1)
+            lay.addWidget(self.__LoadingBar, 0, 1, 1, 1)
             lay.addWidget(self.__movieLbl, 0, 1, 1, 1)
         elif direction == "Top":
             lay.addWidget(self.__descriptionLbl, 0, 0, 1, 1)
-            lay.addWidget(self.__movieLbl, 1, 0, 1, 1)
+            lay.addWidget(self.__LoadingBar, 2, 0, 1, 1)
+            lay.addWidget(self.__movieLbl, 2, 0, 1, 1)
         elif direction == "Right":
             lay.addWidget(self.__movieLbl, 0, 0, 1, 1)
             lay.addWidget(self.__descriptionLbl, 0, 1, 1, 1)
+            lay.addWidget(self.__LoadingBar, 0, 0, 1, 1)
         elif direction == "Bottom":
             lay.addWidget(self.__movieLbl, 0, 0, 1, 1)
             lay.addWidget(self.__descriptionLbl, 1, 0, 1, 1)
+            lay.addWidget(self.__LoadingBar, 0, 0, 1, 1)
         else:
             raise BaseException("Invalid direction.")
 
     def start(self):
-        self.__loading_mv.start()
+        self.__descriptionLbl.setVisible(True)
+        if self.__ProgressDir != "":
+            self.__LoadingBar.setVisible(True)
+        else:
+            self.__loading_mv.start()
         self.__descriptionLbl.setVisible(True)
         self.raise_()
 

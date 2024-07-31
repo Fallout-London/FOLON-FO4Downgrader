@@ -1,7 +1,7 @@
 import sys
 import Utility as Util
 
-sys.excepthook = Util.oops
+# sys.excepthook = Util.oops
 
 import shutil
 import os
@@ -9,9 +9,11 @@ import stat
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
+from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton
 from QLines import *
 import argparse
-import pexpect.popen_spawn
+from wakepy import keep
+import subprocess
 import urllib.request, zipfile, io
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
@@ -49,13 +51,13 @@ def SetupFont():
 
 
 def SetupSteam():
-    global curlcommand
-
     if not os.path.isdir("FOLON-Downgrader-Files/SteamFiles"):
         if Util.IsWindows():
-            url = "https://github.com/coffandro/DepotDownloader/releases/download/release/DepotDownloader-windows-x64.zip"
+            url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip"
         else:
-            url = "https://github.com/coffandro/DepotDownloader/releases/download/release/DepotDownloader-linux-x64.zip"
+            url = (
+                "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
+            )
 
         with urllib.request.urlopen(url) as dl_file:
             with open("FOLON-Downgrader-Files/steam.zip", "wb") as out_file:
@@ -64,6 +66,8 @@ def SetupSteam():
         with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
             zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
         os.remove("FOLON-Downgrader-Files/steam.zip")
+
+    Steam = subprocess.Popen("FOLON-Downgrader-Files/SteamFiles/steamcmd.exe +quit")
 
 
 class MainWindow(QMainWindow):
@@ -177,10 +181,15 @@ class MainWindow(QMainWindow):
         text="Loading..",
         PostFunction=None,
         Window=None,
+        ProgressDir="",
+        ProgressMax=0,
         UseResult=False,
     ):
         self.__loadingTranslucentScreen = LoadingTranslucentScreen(
-            parent=self, description_text=text
+            parent=self,
+            ProgressDir=ProgressDir,
+            ProgressMax=ProgressMax,
+            description_text=text,
         )
         self.__thread = ScreenThread(
             Function,
@@ -322,6 +331,7 @@ class MainWindow(QMainWindow):
 
     def tab2UI(self):  # GUI
         self.FinishedLogging = False
+        self.SteamGuardCode = ""
 
         layout = QFormLayout()
 
@@ -353,14 +363,31 @@ class MainWindow(QMainWindow):
         self.PasswordCheck.setChecked(True)
         self.PasswordCheck.stateChanged.connect(self.ChangeHiddenPassword)
 
+        CheckBoxes = QWidget()
+        CheckLayout = QHBoxLayout()
+
+        CheckLayout.addWidget(QLabel("Password hidden:"))
+        CheckLayout.addWidget(self.PasswordCheck)
+
+        self.SteamGuardCheck = QCheckBox()
+        self.SteamGuardCheck.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.SteamGuardCheck.setChecked(True)
+
+        CheckLayout.addWidget(QLabel("Using mobile Steam Guard:"))
+        CheckLayout.addWidget(self.SteamGuardCheck)
+
+        CheckLayout.addStretch()
+
+        CheckBoxes.setLayout(CheckLayout)
+
         layout.addRow("Username:", self.UsernameEntry)
         layout.addRow("Password:", self.PasswordEntry)
-        layout.addRow("Password hidden:", self.PasswordCheck)
+        layout.addRow(CheckBoxes)
 
         Box = QHBoxLayout()
 
         AlertIcon = QLabel()
-        AlertIcon.setPixmap(QPixmap("img/Alert.svg"))
+        AlertIcon.setPixmap(QPixmap(Util.resource_path("img/Alert.svg")))
 
         AlertLabel = QLabel(
             "<a style='color:White' href='https://github.com/Fallout-London/FOLON-FO4Downgrader/blob/main/Manually.md'>You can also do this process manually if you'd like.</a>"
@@ -391,6 +418,9 @@ class MainWindow(QMainWindow):
             self.PasswordEntry.setEchoMode(QLineEdit.EchoMode.Normal)
 
     def SteamSubmit(self):  # Steam
+        self.Password = self.PasswordEntry.text()
+        self.Username = self.UsernameEntry.text()
+
         if not os.path.isdir("FOLON-Downgrader-Files/SteamFiles/"):
             self.Loading(
                 SetupSteam,
@@ -398,83 +428,17 @@ class MainWindow(QMainWindow):
                 PostFunction=self.SteamSubmit,
             )
         else:
-            self.Loading(
-                self.LoginSteam,
-                text="Logging into Steam",
-                UseResult=True,
-                PostFunction=self.LoginPopups,
-            )
-
-    def LoginSteam(self):  # Steam
-        self.Password = self.PasswordEntry.text()
-        self.Username = self.UsernameEntry.text()
-
-        if Util.IsWritable("FOLON-Downgrader-Files/SteamFiles"):
-            if Util.IsWindows():
-                self.DepotDownloader = (
-                    "FOLON-Downgrader-Files/SteamFiles/DepotDownloader.exe"
-                )
+            if self.SteamGuardCheck.isChecked():
+                self.SteamDialog()
             else:
-                self.DepotDownloader = (
-                    "FOLON-Downgrader-Files/SteamFiles/DepotDownloader"
-                )
-                if os.path.isfile(self.DepotDownloader):
-                    st = os.stat(self.DepotDownloader)
-                    os.chmod(
-                        self.DepotDownloader,
-                        st.st_mode | stat.S_IEXEC,
-                    )
-
-        if os.path.isfile(self.DepotDownloader):
-            self.Steam = pexpect.popen_spawn.PopenSpawn(
-                f'{self.DepotDownloader} -username "{self.Username}" -password "{self.Password}" -remember-password -app 377160 -depot 377162 -dir FOLON-Downgrader-Files/SteamFiles',
-                logfile=sys.stdout.buffer,
-                timeout=120,
-            )
-
-            self.Wait()
-
-    def Wait(self):
-        index = self.Steam.expect(
-            [
-                pexpect.EOF,
-                "auth code sent",
-                "Steam Mobile App",
-                "RateLimitExceeded",
-                "InvalidPassword.",
-                "Steam failed",
-                pexpect.TIMEOUT,
-            ],
-        )
-        if index == 0:
-            Settings["LoginResult"] = "Success"
-            Util.Write_Settings(Settings)
-        elif index == 1:
-            Settings["LoginResult"] = "Guard"
-            Util.Write_Settings(Settings)
-        elif index == 2:
-            Settings["LoginResult"] = "Guard2"
-            Util.Write_Settings(Settings)
-        elif index == 3:
-            Settings["LoginResult"] = "Rate"
-            Util.Write_Settings(Settings)
-        elif index == 4:
-            Settings["LoginResult"] = "PasswordFail"
-            Util.Write_Settings(Settings)
-        elif index == 5:
-            Settings["LoginResult"] = "PasswordFail"
-            Util.Write_Settings(Settings)
-        else:
-            Settings["LoginResult"] = "PasswordFail"
-            Util.Write_Settings(Settings)
+                self.InstallInit()
 
     def LoginPopups(self):  # Steam
         Settings = Util.Read_Settings()
         result = Settings["LoginResult"]
+        print(result)
         if result == "Guard":
             self.SteamDialog()
-        elif result == "Guard2":
-            self.SteamDialog2()
         elif result == "Success":
             self.LoginFinish()
         elif result == "Rate":
@@ -483,32 +447,11 @@ class MainWindow(QMainWindow):
             self.PasswordFail()
 
     def SteamDialog(self):  # GUI
-        Util.Loading = False
-        self.SteamGDlg = QDialog(self)
-        self.SteamGDlgLayout = QFormLayout()
-
-        self.SteamGDlgLayout.addRow(
-            QLabel("<h3>Please enter your Steam guard code.</h3>")
-        )
-        self.SteamGDlgLayout.addRow(
-            QLabel("<p>To authorize your identity Steam has sent a code</p>")
-        )
-        self.SteamGDlgLayout.addRow(
-            QLabel("<p>to either your mail or phone, please enter it here.</p>")
-        )
-
-        self.GuardEntry = QLineEdit()
-        self.GuardEntry.setMaxLength(5)
-        self.GuardButton = QPushButton(text="Submit")
-        self.GuardButton.pressed.connect(self.GuardSubmitInit)
-
-        self.SteamGDlgLayout.addRow(QLabel("<p>Steam guard code:</p>"), self.GuardEntry)
-        self.SteamGDlgLayout.addRow(self.GuardButton)
-        self.SteamGDlg.setWindowTitle("Steam Guard Dialog")
-        self.SteamGDlg.setLayout(self.SteamGDlgLayout)
-        self.SteamGDlg.exec()
-
-    def SteamDialog2(self):  # GUI
+        try:
+            self.SteamGDlg.close()
+            del self.SteamGDlg
+        except:
+            pass
         self.shown = False
         Util.Loading = False
         self.SteamGDlg = QDialog(self)
@@ -523,17 +466,15 @@ class MainWindow(QMainWindow):
 
         HelpBox.addWidget(HelpButton, alignment=Qt.AlignRight)
 
-        HelpLabel = QLabel("<h3>Please authorise Steam guard.</h3>")
+        HelpLabel = QLabel("<h3>Please enter Steam guard.</h3>")
 
         SteamGDlgLayout.addWidget(HelpLabel, 0, 0)
         SteamGDlgLayout.addItem(HelpBox, 0, 1)
 
         labelbox1 = QVBoxLayout()
         labelbox1.addWidget(
-            QLabel("<p>Please open your steam app and authorise your login</p>")
+            QLabel("<p>To authorize your identity Steam has sent a code to your</p>")
         )
-        labelbox1.addWidget(QLabel("<p>Also make sure the capitalization</p>"))
-        labelbox1.addWidget(QLabel("<p>of your username and password are correct</p>"))
 
         SteamGDlgLayout.addItem(
             labelbox1,
@@ -542,11 +483,12 @@ class MainWindow(QMainWindow):
             1,
             2,
         )
-
-        GuardButton = QPushButton(text="Submit")
-        GuardButton.pressed.connect(self.GuardSubmitInit2)
-        SteamGDlgLayout.addWidget(
-            GuardButton,
+        labelbox2 = QVBoxLayout()
+        labelbox2.addWidget(
+            QLabel("<p>Steam app or email, please enter enter it here.</p>")
+        )
+        SteamGDlgLayout.addItem(
+            labelbox2,
             2,
             0,
             1,
@@ -557,27 +499,38 @@ class MainWindow(QMainWindow):
         GuardLabel.setObjectName("Guard2Label")
 
         self.GuardEntry = QLineEdit()
-        self.GuardEntry.setObjectName("Guard2Entry")
+        self.GuardEntry.setObjectName("TextBox")
         self.GuardEntry.setPlaceholderText("Steam guard code")
         self.GuardEntry.setFocus(True)
 
+        GuardSpacer = QSpacerItem(20, 20)
+        LineBox = QHBoxLayout()
+        LineBox.addItem(GuardSpacer)
+        LineBox.addWidget(self.GuardEntry)
+        LineBox.addItem(GuardSpacer)
+
+        GuardButton = QPushButton(text="Downgrade Fallout 4")
+        GuardButton.pressed.connect(self.GuardSubmit)
+
+        GuardBox = QVBoxLayout()
+        GuardBox.addWidget(GuardButton)
+
+        # SteamGDlgLayout.addWidget(GuardLabel, 3, 0)
+        SteamGDlgLayout.addItem(LineBox, 3, 0, 1, 2)
+        SteamGDlgLayout.addItem(GuardBox, 4, 0, 1, 2)
         self.SteamGDlg.setWindowTitle("Steam Guard Dialog")
         self.SteamGDlg.setLayout(SteamGDlgLayout)
         self.GuardEntry.setFocus()
-        self.SteamGDlg.exec()
+        self.SteamGDlg.show()
 
-    def GuardSubmitInit2(self):
-        try:
-            self.SteamGDlg.close()
-        except:
-            pass
-
-        self.Loading(
-            self.LoginSteam,
-            text="Checking auth",
-            UseResult=True,
-            PostFunction=self.LoginPopups,
-        )
+    def GuardSubmit(self):
+        Settings = Util.Read_Settings()
+        Settings["LoginResult"] = ""
+        Util.Write_Settings(Settings)
+        self.DownloadFailed = False
+        self.SteamGDlg.close()
+        self.SteamGuardCode = self.GuardEntry.text()
+        self.InstallInit()
 
     def SteamGuideDialog(self, parent):  # GUI
         if not self.shown:
@@ -589,6 +542,9 @@ class MainWindow(QMainWindow):
 
             GuideBox.addLayout(self.SteamGuideLayout)
             GuideBox.addLayout(button_layout)
+
+            Page1 = QWidget()
+            Page1Layout = QGridLayout()
 
             GuideLabel1 = QLabel(
                 "<p>To authorize please open the Steam app on your phone</p>"
@@ -602,9 +558,85 @@ class MainWindow(QMainWindow):
 
             ImageLabel1.setPixmap(SteamAuth)
 
-            GuideBox.addWidget(GuideLabel1)
-            GuideBox.addWidget(GuideLabel2)
-            GuideBox.addWidget(ImageLabel1)
+            Page1Layout.addWidget(GuideLabel1)
+            Page1Layout.addWidget(GuideLabel2)
+            Page1Layout.addWidget(ImageLabel1)
+
+            Page1.setLayout(Page1Layout)
+
+            Page2 = QWidget()
+            Page2Layout = QGridLayout()
+
+            GuideLabel3 = QLabel("<p>Click on the shield icon in the bottom bar</p>")
+            GuideLabel4 = QLabel('<p>Then "Show Steam Guard code".</p>')
+            GuideLabel5 = QLabel("<p>When prompted about a security warning simply</p>")
+            GuideLabel6 = QLabel('<p>click Show Steam Guard code" again.</p>')
+
+            ImageLabel2 = QLabel(text="2")
+            ImageLabel3 = QLabel(text="3")
+            ImageLabel2.setObjectName("ImageLabel")
+            ImageLabel3.setObjectName("ImageLabel")
+
+            SteamShow = QPixmap(Util.resource_path("img/SteamShow.png")).scaled(
+                350, 127
+            )
+            SteamConfirm = QPixmap(Util.resource_path("img/SteamConfirm.png")).scaled(
+                350, 275
+            )
+
+            ImageLabel2.setPixmap(SteamShow)
+            ImageLabel3.setPixmap(SteamConfirm)
+
+            Page2Layout.addWidget(GuideLabel3)
+            Page2Layout.addWidget(GuideLabel4)
+            Page2Layout.addWidget(ImageLabel2)
+            Page2Layout.addWidget(GuideLabel5)
+            Page2Layout.addWidget(GuideLabel6)
+            Page2Layout.addWidget(ImageLabel3)
+
+            Page2.setLayout(Page2Layout)
+
+            Page3 = QWidget()
+            Page3Layout = QVBoxLayout()
+
+            GuideLabel7 = QLabel("<p>You should end up on this screen,</p>")
+            GuideLabel8 = QLabel(
+                "<p>enter the code on your screen into the text field.</p>"
+            )
+            GuideLabel9 = QLabel(
+                "<p>Do <b>NOT</b> enter a code after it's dissapeared.</p>"
+            )
+
+            ImageLabel4 = QLabel(text="4")
+            ImageLabel4.setObjectName("ImageLabel")
+
+            SteamCode = QPixmap(Util.resource_path("img/SteamCode.png")).scaled(
+                350, 344
+            )
+
+            ImageLabel4.setPixmap(SteamCode)
+            Page3Layout.addWidget(GuideLabel7)
+            Page3Layout.addWidget(GuideLabel8)
+            Page3Layout.addWidget(ImageLabel4)
+
+            Page3.setLayout(Page3Layout)
+
+            self.SGDBBtn = QPushButton()
+            self.SGDBBtn.setEnabled(False)
+            self.SGDBBtn.setIcon(
+                QIcon(Util.resource_path("img/arrow-left-Disabled.svg"))
+            )
+            self.SGDBBtn.pressed.connect(lambda: self.SteamGUideCrement("-1"))
+            button_layout.addWidget(self.SGDBBtn)
+
+            self.SGDFBtn = QPushButton()
+            self.SGDFBtn.setIcon(QIcon(Util.resource_path("img/arrow-right.svg")))
+            self.SGDFBtn.pressed.connect(lambda: self.SteamGUideCrement("1"))
+            button_layout.addWidget(self.SGDFBtn)
+
+            self.SteamGuideLayout.addWidget(Page1)
+            self.SteamGuideLayout.addWidget(Page2)
+            self.SteamGuideLayout.addWidget(Page3)
 
             self.GuideDialog.setLayout(GuideBox)
             self.GuideDialog.move(parent.x() + parent.width(), parent.y())
@@ -612,6 +644,42 @@ class MainWindow(QMainWindow):
         else:
             self.GuideDialog.close()
         self.shown = not self.shown
+
+    def SteamGUideCrement(self, Unit):  # GUI Backend
+        if Unit == "1":
+            if not self.SGDIndex >= 3:
+                self.SGDIndex += 1
+            if self.SGDIndex >= 3:
+                self.SGDFBtn.setEnabled(False)
+                self.SGDFBtn.setIcon(
+                    QIcon(Util.resource_path("img/arrow-right-Disabled.svg"))
+                )
+            else:
+                self.SGDBBtn.setEnabled(True)
+                self.SGDBBtn.setIcon(QIcon(Util.resource_path("img/arrow-left.svg")))
+        elif Unit == "-1":
+            if not self.SGDIndex <= 1:
+                self.SGDIndex -= 1
+            if self.SGDIndex <= 1:
+                self.SGDBBtn.setEnabled(False)
+                self.SGDBBtn.setIcon(
+                    QIcon(Util.resource_path("img/arrow-left-Disabled.svg"))
+                )
+            else:
+                self.SGDFBtn.setEnabled(True)
+                self.SGDFBtn.setIcon(QIcon(Util.resource_path("img/arrow-right.svg")))
+        FunctionName = f"SteamGuideTab{self.SGDIndex}"
+        func = getattr(self, FunctionName)
+        func()
+
+    def SteamGuideTab1(self):  # GUI Backend
+        self.SteamGuideLayout.setCurrentIndex(0)
+
+    def SteamGuideTab2(self):  # GUI Backend
+        self.SteamGuideLayout.setCurrentIndex(1)
+
+    def SteamGuideTab3(self):  # GUI Backend
+        self.SteamGuideLayout.setCurrentIndex(2)
 
     def LoginFinish(self):  # Steam
         try:
@@ -639,48 +707,57 @@ class MainWindow(QMainWindow):
         self.SteamPDlgLayout.addRow(QLabel("<p>and password are correct</p>"))
         self.SteamPDlg.setWindowTitle("Steam Password Dialog")
         self.SteamPDlg.setLayout(self.SteamPDlgLayout)
-        self.SteamPDlg.exec()
+        self.SteamPDlg.show()
 
     def GuardSubmitInit(self):  # Steam
+        try:
+            self.SteamGDlg.close()
+        except:
+            pass
+        try:
+            self.GuideDialog.close()
+        except:
+            pass
+
         self.Loading(
             self.GuardSubmit,
             text=f"Logging in",
             PostFunction=self.LoginPopups,
         )
 
-    def GuardSubmit(self):  # Steam
-        Settings = Util.Read_Settings()
-        Username = self.Username
-        Password = self.Password
-        print(self.GuardEntry.text())
-
-        self.Steam.sendline(f"{self.GuardEntry.text()}\n")
-
-        print("Wait 2 started")
-        index = self.Steam.expect(
-            [
-                "Done!",
-                "incorrect",
-                "RateLimitExceeded",
-                "Steam Failed",
-                pexpect.TIMEOUT,
-            ],
+    def OpenStorageDialog(self):  # GUI
+        try:
+            self.SteamGDlg.close()
+        except:
+            pass
+        try:
+            self.GuideDialog.close()
+        except:
+            pass
+        self.StorageDialog = QDialog()
+        StorageDialogLayout = QFormLayout()
+        StorageDialogLayout.addRow(QLabel("<h1>Not enough storage</h1>"))
+        StorageDialogLayout.addRow(
+            QLabel(
+                "<p>You do not have enough storage on the drive with the downgrader,</p>"
+            )
         )
-        if index == 0:
-            Settings["LoginResult"] = "Success"
-            Util.Write_Settings(Settings)
-        elif index == 1:
-            Settings["LoginResult"] = "Guard"
-            Util.Write_Settings(Settings)
-        elif index == 2:
-            Settings["LoginResult"] = "Rate"
-            Util.Write_Settings(Settings)
-        elif index == 3:
-            self.GuardSubmit()
-        elif index == 4:
-            Settings["LoginResult"] = "Rate"
-            Util.Write_Settings(Settings)
-        print("Wait 2 ended")
+        StorageDialogLayout.addRow(
+            QLabel("<p>please move it to one with at least 28gb free.</p>")
+        )
+        StorageDialogLayout.addRow(
+            QLabel("<p>(It does not matter if it's the one with Fallout 4 on it)</p>")
+        )
+
+        StorageDialogButton = QPushButton(text="Return")
+        StorageDialogButton.pressed.connect(self.CloseStorageDialog)
+        StorageDialogLayout.addRow(StorageDialogButton)
+
+        self.StorageDialog.setLayout(StorageDialogLayout)
+        self.StorageDialog.exec()
+
+    def CloseStorageDialog(self):
+        self.StorageDialog.close()
 
     def OpenRateDialog(self):  # GUI
         try:
@@ -722,14 +799,10 @@ class MainWindow(QMainWindow):
     ##########################################################################################
 
     def tab3UI(self):  # GUI
-        self.DownloadIndex = 0
         self.SteamFiles = "FOLON-Downgrader-Files/SteamFiles/depots"
         self.Downloaded = 0
+        self.DownloadFailed = False
         layout = QFormLayout()
-
-        Header = QLabel("Downgrade Fallout 4")
-        Header.setFont(QFont("Overseer", 30))
-        # layout.addRow(Header)
         layout.addRow(
             QLabel(
                 "<p>The following button can take quite a while, please <b>be patient</b>.</p>"
@@ -741,58 +814,191 @@ class MainWindow(QMainWindow):
         )
         InstallButton.setObjectName("InstallButton")
         InstallButton.setFont(QFont("Overseer", 25))
-        InstallButton.pressed.connect(self.InstallInit)
+        InstallButton.pressed.connect(self.OpenDepotsDialog)
         layout.addRow(InstallButton)
 
         self.tab3.setLayout(layout)
 
+    def OpenDepotsDialog(self):  # GUI
+        try:
+            self.SteamGDlg.close()
+        except:
+            pass
+        try:
+            self.GuideDialog.close()
+        except:
+            pass
+        self.DepotDialog = QDialog()
+        DepotDialogLayout = QFormLayout()
+        DepotDialogLayout.addRow(QLabel("<h1>Check steam before proceeding</h1>"))
+        DepotDialogLayout.addRow(
+            QLabel("<p>You are about to download a large amount of data,</p>")
+        )
+        DepotDialogLayout.addRow(
+            QLabel("<p>please check steam if you own every dlc except</p>")
+        )
+        DepotDialogLayout.addRow(QLabel("<p>for the texture pack on steam.</p>"))
+
+        DepotDialogButton = QPushButton(text="Return")
+        DepotDialogButton.pressed.connect(self.CloseDepotDialog)
+
+        DepotSubmitButton = QPushButton(text="Continue")
+        DepotSubmitButton.pressed.connect(self.InstallInit)
+
+        DepotDialogLayout.addRow(DepotDialogButton, DepotSubmitButton)
+
+        self.DepotDialog.setLayout(DepotDialogLayout)
+        self.DepotDialog.show()
+
+    def CloseDepotDialog(self):
+        self.DepotDialog.close()
+
     def InstallInit(self):
-        if self.Downloaded == 0:
-            self.Loading(
-                lambda: self.Install(self.DownloadIndex),
-                text=f"Downloading depots",
-                PostFunction=self.InstallInit,
-            )
-        elif self.Downloaded == 1:
-            self.Loading(
-                self.RemoveCC,
-                text=f"Removing Creation Club content",
-                PostFunction=self.InstallInit,
-            )
-        elif self.Downloaded == 2:
-            self.activate_tab_4()
+        Settings = Util.Read_Settings()
+        print(self.DownloadFailed)
+        if self.DownloadFailed:
+            result = Settings["LoginResult"]
+            print(result)
+            if result == "Guard":
+                self.SteamDialog()
+            elif result == "Rate":
+                self.OpenRateDialog()
+            elif result == "PasswordFail":
+                self.activate_tab_2()
+        else:
+            if self.Downloaded == 0:
+                Settings["LoginResult"] = ""
+                Util.Write_Settings(Settings)
+                self.DownloadFailed = False
+                self.Loading(
+                    self.Install,
+                    text=f"Downloading depots, grab a cuppa tea, innit'",
+                    ProgressDir="FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160",
+                    ProgressMax=117,
+                    PostFunction=self.InstallInit,
+                )
+            elif self.Downloaded == 1:
+                self.Loading(
+                    self.MoveFiles,
+                    text=f"Moving files to {self.SteamPath}",
+                    ProgressDir="FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160",
+                    ProgressMax=117,
+                    PostFunction=self.InstallInit,
+                )
+            elif self.Downloaded == 2:
+                self.Loading(
+                    self.RemoveCC,
+                    text=f"Removing Creation Club content",
+                    PostFunction=self.InstallInit,
+                )
+            elif self.Downloaded == 3:
+                self.Loading(
+                    self.RemoveHD,
+                    text=f"Removing Texture Pack DLC",
+                    PostFunction=self.InstallInit,
+                )
+            elif self.Downloaded == 4:
+                self.activate_tab_4()
 
-    def Install(self, index):
-        self.Steam.timeout = None
-        self.Steam = pexpect.popen_spawn.PopenSpawn(
-            f'{self.DepotDownloader} -username "{self.Username}" -remember-password -app 377160 -depot 377161 377162 377163 377164 435880 435870 435871 -manifest 7497069378349273908 5847529232406005096 5819088023757897745 2178106366609958945 1255562923187931216 1691678129192680960 5106118861901111234 -dir "{self.SteamPath}" -validate',
-            logfile=sys.stdout.buffer,
-            timeout=None,
-        )
-        self.Wait3()
+    def Install(self):
+        try:
+            self.SteamGDlg.close()
+        except:
+            pass
 
-    def Wait3(self):
-        index = self.Steam.expect(
-            [
-                "Disconnected from Steam",
-                "RateLimitExceeded",
-                pexpect.TIMEOUT,
-            ],
-        )
-        if index == 0:
-            self.DownloadIndex += 1
-            if self.DownloadIndex == len(self.Depots):
-                self.Downloaded += 1
-        elif index == 1:
-            Settings["InstallResult"] = "Rate"
+        if Util.IsWindows():
+            self.DepotDownloader = "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe"
+        else:
+            self.DepotDownloader = "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh"
+            if os.path.isfile(self.DepotDownloader):
+                st = os.stat(self.DepotDownloader)
+                os.chmod(
+                    self.DepotDownloader,
+                    st.st_mode | stat.S_IEXEC,
+                )
+
+        FilePath = "./FOLON-Downgrader-Files/DepotsList.txt"
+        with open(FilePath, "r") as file:
+            lines = file.readlines()
+
+        with open(FilePath, "w") as file:
+            file.write("@ShutdownOnFailedCommand 0\n")
+            file.write("@NoPromptForPassword 1\n")
+            if self.SteamGuardCode == "":
+                file.write(f'login "{self.Username}" "{self.Password}"\n')
+            else:
+                file.write(
+                    f'login "{self.Username}" "{self.Password}" "{self.SteamGuardCode}"\n'
+                )
+            file.writelines(lines)
+        with keep.presenting():
+            try:
+                with subprocess.Popen(
+                    [
+                        self.DepotDownloader,
+                        "+runscript",
+                        "../DepotsList.txt",
+                        "+validate",
+                        "+quit",
+                    ],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                ) as p:
+                    stdout, stderr = p.communicate()
+            except subprocess.SubprocessError as e:
+                print(f"An error occurred: {e}")
+
+        output = p.communicate()[0].decode("utf-8")
+        print(output)
+        if (
+            "set_steam_guard_code" in output
+            or "Steam Guard Mobile Authenticator app" in output
+            or "two-factor" in output
+        ):
+            Settings["LoginResult"] = "Guard"
             Util.Write_Settings(Settings)
-        elif index == 2:
-            Settings["InstallResult"] = "Rate"
+            self.DownloadFailed = True
+        elif "(Rate Limit Exceeded)" in output:
+            Settings["LoginResult"] = "Rate"
             Util.Write_Settings(Settings)
+            self.DownloadFailed = True
+        elif "(Invalid Login Auth Code)" in output:
+            Settings["LoginResult"] = "Guard"
+            Util.Write_Settings(Settings)
+            self.DownloadFailed = True
+        elif "(Invalid Password)" in output:
+            Settings["LoginResult"] = "PasswordFail"
+            Util.Write_Settings(Settings)
+            self.DownloadFailed = True
+        else:
+            self.Downloaded += 1
+
+        with open(FilePath, "r") as file:
+            data = file.read().splitlines(True)
+
+        with open(FilePath, "w") as file:
+            file.writelines(data[3:])
+
+    def MoveFiles(self):
+        for i in os.listdir(
+            "FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"
+        ):
+            Util.MoveFiles(
+                f"FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160/{i}",
+                self.SteamPath,
+            )
+        self.Downloaded += 1
 
     def RemoveCC(self):
         for i in os.listdir(self.SteamPath + "/Data"):
             if i[:2] == "cc":
+                os.remove(self.SteamPath + "/Data/" + i)
+        self.Downloaded += 1
+
+    def RemoveHD(self):
+        for i in os.listdir(self.SteamPath + "/Data"):
+            if i[:22] == "DLCUltraHighResolution":
                 os.remove(self.SteamPath + "/Data/" + i)
         self.Downloaded += 1
 
@@ -856,6 +1062,9 @@ class MainWindow(QMainWindow):
 
 
 def main(steampath=None):
+    if os.path.isfile("FOLON-Downgrader-Files/SteamFiles/DepotDownloader.exe"):
+        shutil.rmtree("FOLON-Downgrader-Files/SteamFiles")
+
     if not os.path.isdir("FOLON-Downgrader-Files"):
         os.mkdir("FOLON-Downgrader-Files")
     shutil.copy(Util.resource_path("img/check.svg"), "FOLON-Downgrader-Files/")
@@ -868,6 +1077,11 @@ def main(steampath=None):
     CSSFile = Util.resource_path("FOLON.css")
     with open(CSSFile, "r") as fh:
         app.setStyleSheet(fh.read())
+
+    if Util.bytesto(shutil.disk_usage(".")[2], "g") < 28:
+        MainWindow().OpenStorageDialog()
+        return
+
     SetupFont()
     if steampath != None:
         ex = MainWindow(steampath)

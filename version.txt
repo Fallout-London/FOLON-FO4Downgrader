@@ -32,7 +32,7 @@ VSVersionInfo(
                     [
                         StringStruct("CompanyName", "FOLON Team"),
                         StringStruct("FileDescription", "Downgrades Fallout 4"),
-                        StringStruct("FileVersion", "1.5.3"),
+                        StringStruct("FileVersion", "1.5.5"),
                         StringStruct("InternalName", "FOLON-Downgrader"),
                         StringStruct("LegalCopyright", "Copyright (c) FOLON Team"),
                         StringStruct("OriginalFilename", "FOLON-Downgrader.exe"),
