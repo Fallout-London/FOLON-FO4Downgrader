@@ -1,6 +1,12 @@
 import os, inspect, sys
 
-from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout, QGraphicsOpacityEffect, QProgressBar
+from PyQt5.QtWidgets import (
+    QWidget,
+    QLabel,
+    QGridLayout,
+    QGraphicsOpacityEffect,
+    QProgressBar,
+)
 from PyQt5.QtCore import QSize, Qt, QThread, QTimer
 from PyQt5.QtGui import QMovie, QPalette, QColor
 import Utility as Util
@@ -51,7 +57,7 @@ class LoadingTranslucentScreen(QWidget):
                 "QLabel { background: transparent; color: black; }"
             )
             self.__descriptionLbl.setAlignment(Qt.AlignVCenter | Qt.AlignCenter)
-        
+
         self.__LoadingBar = QProgressBar(self)
         self.__LoadingBar.setVisible(False)
         if self.__ProgressDir.strip() != "":
@@ -92,7 +98,7 @@ class LoadingTranslucentScreen(QWidget):
         else:
             self.__descriptionLbl.setText(cur_text + dot)
         if self.__ProgressDir != "":
-            value = len(os.listdir(self.__ProgressDir))-1
+            value = len(os.listdir(self.__ProgressDir)) - 1
             if value < 1:
                 self.__LoadingBar.setValue(0)
             else:
