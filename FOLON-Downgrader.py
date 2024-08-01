@@ -13,7 +13,7 @@ from QLines import *
 import argparse
 from wakepy import keep
 import subprocess
-import urllib.request, zipfile, io
+import urllib.request, zipfile, io, tarfile
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
 
