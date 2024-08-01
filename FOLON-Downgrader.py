@@ -9,7 +9,6 @@ import stat
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
-from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton
 from QLines import *
 import argparse
 from wakepy import keep
