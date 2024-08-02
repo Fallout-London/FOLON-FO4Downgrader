@@ -13,7 +13,7 @@ from QLines import *
 import argparse
 from wakepy import keep
 import subprocess
-import urllib.request, zipfile, io, tarfile
+import urllib.request, zipfile, io, tarfile, json
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
 
@@ -41,6 +41,13 @@ def DownloadDepotList():
     with urllib.request.urlopen(url) as dl_file:
         with open("FOLON-Downgrader-Files/DepotsList.txt", "wb") as out_file:
             out_file.write(dl_file.read())
+
+
+def GetChecksums():
+    url = "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/Checksums.json"
+    with urllib.request.urlopen(url) as dl_data:
+        data = json.load(dl_data)
+        print(data)
 
 
 def SetupFont():
@@ -1092,6 +1099,7 @@ def main(steampath=None):
         Util.resource_path("img/FOLONBackground.png"), "FOLON-Downgrader-Files/"
     )
     DownloadDepotList()
+    GetChecksums()
 
     app = QApplication(sys.argv)
     CSSFile = Util.resource_path("FOLON.css")
