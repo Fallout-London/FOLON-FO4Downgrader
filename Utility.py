@@ -172,7 +172,6 @@ def oops(type, value, tb):
     sys.exit(1)
 
 
-
 def MoveFiles(srcdir, dstdir):
     from os import path, listdir, mkdir
     from shutil import move, rmtree
