@@ -265,20 +265,18 @@ class MainWindow(QMainWindow):
             self.SubmitButton.setEnabled(True)
 
     def GetDirectory(self):  # GUI Backend
-        if not Util.WhereSteam() == False:
-            folderpath = QFileDialog.getExistingDirectory(
-                self,
-                "Select Folder",
-                Util.WhereSteam()[0],
-            )
-        else:
-            folderpath = QFileDialog.getExistingDirectory(self, "Select Folder")
-        print(folderpath)
-        self.PathEntry.setText(folderpath)
+        folderpath = QFileDialog.getOpenFileName(
+            self,
+            "Select Fallout4.exe",
+            Util.WhereSteam()[0],
+            "Fallout4.exe (*.exe)",
+        )
+        print(folderpath)[0].replace("Fallout4.exe", "")
+        self.PathEntry.setText(folderpath[0].replace("Fallout4.exe", ""))
 
     def SubmitPath(self):  # GUI Backend
-        if os.path.isdir(self.PathEntry.text()):
-            self.WrongPathDialog2(self.PathEntry.text())
+        if os.path.isdir(self.PathEntry.text().replace("Fallout4.exe", "")):
+            self.WrongPathDialog2(self.PathEntry.text().replace("Fallout4.exe", ""))
         else:
             self.WrongPathDialog1()
 
