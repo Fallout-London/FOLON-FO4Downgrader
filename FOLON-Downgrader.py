@@ -273,6 +273,7 @@ class MainWindow(QMainWindow):
         )
         print(folderpath)[0].replace("Fallout4.exe", "")
         self.PathEntry.setText(folderpath[0].replace("Fallout4.exe", ""))
+        self.PathEntry.setFocus()
 
     def SubmitPath(self):  # GUI Backend
         if os.path.isdir(self.PathEntry.text().replace("Fallout4.exe", "")):
