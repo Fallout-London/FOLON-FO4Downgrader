@@ -164,6 +164,7 @@ class MainWindow(QMainWindow):
         self.SubmitButton.setText("Login to Steam")
         self.InstallProgress.setFormat("Login to Steam")
         self.InstallProgress.setValue(self.TabIndex)
+        self.UsernameEntry.setFocus()
 
     def activate_tab_3(self):  # GUI Backend
         if self.FinishedLogging:
@@ -172,6 +173,7 @@ class MainWindow(QMainWindow):
             self.SubmitButton.hide()
             self.InstallProgress.setFormat("Downgrade Fallout 4")
             self.InstallProgress.setValue(self.TabIndex)
+            self.InstallButton.setFocus()
 
     def activate_tab_4(self):  # GUI Backend
         self.TabIndex = 4
@@ -180,6 +182,7 @@ class MainWindow(QMainWindow):
         self.SubmitButton.setText("Finish!")
         self.InstallProgress.setFormat("Bethesda, Bethesda Never Changes")
         self.InstallProgress.setValue(self.TabIndex)
+        self.SubmitButton.setFocus()
 
     #########################################################################################
     # GENERAL GUI                                                                           #
@@ -818,13 +821,13 @@ class MainWindow(QMainWindow):
             )
         )
 
-        InstallButton = QPushButton(
+        self.InstallButton = QPushButton(
             text="Downgrade Fallout 4 \n(This will take a long time)"
         )
-        InstallButton.setObjectName("InstallButton")
-        InstallButton.setFont(QFont("Overseer", 25))
-        InstallButton.pressed.connect(self.OpenDepotsDialog)
-        layout.addRow(InstallButton)
+        self.InstallButton.setObjectName("InstallButton")
+        self.InstallButton.setFont(QFont("Overseer", 25))
+        self.InstallButton.pressed.connect(self.OpenDepotsDialog)
+        layout.addRow(self.InstallButton)
 
         self.tab3.setLayout(layout)
 
