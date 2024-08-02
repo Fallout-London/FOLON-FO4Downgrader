@@ -66,14 +66,14 @@ def SetupSteam():
             with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
                 zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
             Steam = subprocess.Popen(
-                [".\\steamcmd.exe", "+quit"],
+                ["FOLON-Downgrader-Files/SteamFiles/steamcmd.exe", "+quit"],
                 cwd="FOLON-Downgrader-Files/SteamFiles/",
             )
         else:
             with tarfile.open("FOLON-Downgrader-Files/steam.zip", "r") as tar:
                 tar.extractall("FOLON-Downgrader-Files/SteamFiles/")
             Steam = subprocess.Popen(
-                ["./steamcmd.sh", "+quit"],
+                ["FOLON-Downgrader-Files/SteamFiles/steamcmd.sh", "+quit"],
                 cwd="FOLON-Downgrader-Files/SteamFiles/",
             )
 
