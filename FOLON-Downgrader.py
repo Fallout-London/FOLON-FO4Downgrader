@@ -36,6 +36,13 @@ class ScreenThread(LoadingThread):
         self._Function()
 
 
+def DownloadDepotList():
+    url = "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/DepotsList.txt"
+    with urllib.request.urlopen(url) as dl_file:
+        with open("FOLON-Downgrader-Files/DepotsList.txt", "wb") as out_file:
+            out_file.write(dl_file.read())
+
+
 def SetupFont():
     url = "https://dl.dafont.com/dl/?f=overseer"
     with urllib.request.urlopen(url) as dl_file:
@@ -1084,7 +1091,7 @@ def main(steampath=None):
     shutil.copy(
         Util.resource_path("img/FOLONBackground.png"), "FOLON-Downgrader-Files/"
     )
-    shutil.copy(Util.resource_path("DepotsList.txt"), "FOLON-Downgrader-Files/")
+    DownloadDepotList()
 
     app = QApplication(sys.argv)
     CSSFile = Util.resource_path("FOLON.css")
