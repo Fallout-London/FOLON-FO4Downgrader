@@ -274,8 +274,9 @@ class MainWindow(QMainWindow):
             Util.WhereSteam()[0],
             "Fallout4.exe (*.exe)",
         )
-        print(folderpath)[0].replace("Fallout4.exe", "")
-        self.PathEntry.setText(folderpath[0].replace("Fallout4.exe", ""))
+        if folderpath[0] != ":"
+            print(folderpath[0].replace("Fallout4.exe", ""))
+            self.PathEntry.setText(folderpath[0].replace("Fallout4.exe", ""))
         self.PathEntry.setFocus()
 
     def SubmitPath(self):  # GUI Backend
