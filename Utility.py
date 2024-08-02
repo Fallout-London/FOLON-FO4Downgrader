@@ -163,6 +163,17 @@ def BlockUpdates():
             pass
 
 
+def list_files_walk(start_path="."):
+    from os import path, walk
+
+    FileArray = []
+    for root, dirs, files in walk(start_path):
+        for file in files:
+            FileArray.append(path.join(root, file).replace("\\", "/"))
+
+    return FileArray
+
+
 def oops(type, value, tb):
     import sys
     import traceback

@@ -46,8 +46,7 @@ def DownloadDepotList():
 def GetChecksums():
     url = "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/Checksums.json"
     with urllib.request.urlopen(url) as dl_data:
-        data = json.load(dl_data)
-        print(data)
+        return json.load(dl_data)
 
 
 def SetupFont():
@@ -64,34 +63,31 @@ def SetupFont():
 
 
 def SetupSteam():
-    if not os.path.isdir("FOLON-Downgrader-Files/SteamFiles"):
-        if Util.IsWindows():
-            url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip"
-        else:
-            url = (
-                "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
-            )
+    if Util.IsWindows():
+        url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip"
+    else:
+        url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
 
-        with urllib.request.urlopen(url) as dl_file:
-            with open("FOLON-Downgrader-Files/steam.zip", "wb") as out_file:
-                out_file.write(dl_file.read())
+    with urllib.request.urlopen(url) as dl_file:
+        with open("FOLON-Downgrader-Files/steam.zip", "wb") as out_file:
+            out_file.write(dl_file.read())
 
-        if Util.IsWindows():
-            with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
-                zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
-            Steam = subprocess.Popen(
-                ["FOLON-Downgrader-Files/SteamFiles/steamcmd.exe", "+quit"],
-                cwd="FOLON-Downgrader-Files/SteamFiles/",
-            )
-        else:
-            with tarfile.open("FOLON-Downgrader-Files/steam.zip", "r") as tar:
-                tar.extractall("FOLON-Downgrader-Files/SteamFiles/")
-            Steam = subprocess.Popen(
-                ["FOLON-Downgrader-Files/SteamFiles/steamcmd.sh", "+quit"],
-                cwd="FOLON-Downgrader-Files/SteamFiles/",
-            )
+    if Util.IsWindows():
+        with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
+            zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
+        Steam = subprocess.run(
+            ["FOLON-Downgrader-Files/SteamFiles/steamcmd.exe", "+quit"],
+            cwd="FOLON-Downgrader-Files/SteamFiles/",
+        )
+    else:
+        with tarfile.open("FOLON-Downgrader-Files/steam.zip", "r") as tar:
+            tar.extractall("FOLON-Downgrader-Files/SteamFiles/")
+        Steam = subprocess.run(
+            ["FOLON-Downgrader-Files/SteamFiles/steamcmd.sh", "+quit"],
+            cwd="FOLON-Downgrader-Files/SteamFiles/",
+        )
 
-        os.remove("FOLON-Downgrader-Files/steam.zip")
+    os.remove("FOLON-Downgrader-Files/steam.zip")
 
 
 class MainWindow(QMainWindow):
@@ -162,6 +158,8 @@ class MainWindow(QMainWindow):
             self.SteamPath = steampath
 
             self.activate_tab_2()
+
+        self.Validate()
 
     def ContinueAction(self):
         if self.TabIndex == 1:
@@ -906,25 +904,31 @@ class MainWindow(QMainWindow):
                 )
             elif self.Downloaded == 1:
                 self.Loading(
+                    self.Validate,
+                    text=f"Validating files",
+                    PostFunction=self.InstallInit,
+                )
+            elif self.Downloaded == 2:
+                self.Loading(
                     self.MoveFiles,
                     text=f"Moving files to {self.SteamPath}",
                     ProgressDir="FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160",
                     ProgressMax=117,
                     PostFunction=self.InstallInit,
                 )
-            elif self.Downloaded == 2:
+            elif self.Downloaded == 3:
                 self.Loading(
                     self.RemoveCC,
                     text=f"Removing Creation Club content",
                     PostFunction=self.InstallInit,
                 )
-            elif self.Downloaded == 3:
+            elif self.Downloaded == 4:
                 self.Loading(
                     self.RemoveHD,
                     text=f"Removing Texture Pack DLC",
                     PostFunction=self.InstallInit,
                 )
-            elif self.Downloaded == 4:
+            elif self.Downloaded == 5:
                 self.activate_tab_4()
 
     def Install(self):
@@ -960,23 +964,22 @@ class MainWindow(QMainWindow):
             file.writelines(lines)
         with keep.presenting():
             try:
-                with subprocess.Popen(
+                self.SteamProcess = subprocess.Popen(
                     [
                         self.DepotDownloader,
                         "+runscript",
                         "../DepotsList.txt",
                         "+validate",
-                        "+quit",
                     ],
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                ) as p:
-                    stdout, stderr = p.communicate()
+                )
+                stdout, stderr = self.SteamProcess.communicate()
             except subprocess.SubprocessError as e:
                 print(f"An error occurred: {e}")
 
-        output = p.communicate()[0].decode("utf-8")
+        output = self.SteamProcess.communicate()[0].decode("utf-8")
         print(output)
         if (
             "set_steam_guard_code" in output
@@ -1006,6 +1009,18 @@ class MainWindow(QMainWindow):
 
         with open(FilePath, "w") as file:
             file.writelines(data[3:])
+
+    def Validate(self):
+        import hashlib
+
+        Checksums = GetChecksums()["FilePairs"]
+
+        for i in Util.list_files_walk(
+            "FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"
+        ):
+            if i[6:] == "depot_":
+                i = i[13:]
+            print(i)
 
     def MoveFiles(self):
         for i in os.listdir(
@@ -1098,8 +1113,9 @@ def main(steampath=None):
     shutil.copy(
         Util.resource_path("img/FOLONBackground.png"), "FOLON-Downgrader-Files/"
     )
+    if os.path.isfile("FOLON-Downgrader-Files/DepotsList.txt"):
+        os.remove("FOLON-Downgrader-Files/DepotsList.txt")
     DownloadDepotList()
-    GetChecksums()
 
     app = QApplication(sys.argv)
     CSSFile = Util.resource_path("FOLON.css")
