@@ -65,13 +65,17 @@ def SetupSteam():
         if Util.IsWindows():
             with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
                 zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
+            Steam = subprocess.Popen(
+                "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe +quit"
+            )
         else:
-            with tarfile.open("FOLON-Downgrader-Files/steam.zip", 'r') as tar:
+            with tarfile.open("FOLON-Downgrader-Files/steam.zip", "r") as tar:
                 tar.extractall("FOLON-Downgrader-Files/SteamFiles/")
-        
-        os.remove("FOLON-Downgrader-Files/steam.zip")
+            Steam = subprocess.Popen(
+                "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh +quit"
+            )
 
-    Steam = subprocess.Popen("FOLON-Downgrader-Files/SteamFiles/steamcmd.exe +quit")
+        os.remove("FOLON-Downgrader-Files/steam.zip")
 
 
 class MainWindow(QMainWindow):
