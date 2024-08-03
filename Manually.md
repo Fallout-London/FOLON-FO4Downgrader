@@ -5,9 +5,9 @@ Rolling back to the `1.10.163.0` version of Fallout 4 is required for Fallout: L
 Pre-requisites for downgrading:
 Fallout 4, Wasteland Workshop DLC, Automatron DLC
 
-First you need to open the Steam Console [via this link](steam://open/console), copy the below and paste it into a web browser or launch Steam with the -console variable
+First you need to open the Steam Console [via this link](steam://open/console), copy the below and paste it into a web browser or run the following in the commandline
 ```
-steam://open/console
+steam steam://open/console
 ```
 <details open>
 <summary>Image examples</summary>
