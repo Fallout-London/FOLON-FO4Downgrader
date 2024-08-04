@@ -85,10 +85,7 @@ Nuka World DLC English Language Pack (298 MB)
 ```
 download_depot 377160 393895 7677765994120765493
 ```
-HD Texture Pack DLC (56371 MB) (Optional - not required for FOLON, but if you have the DLC you need this depot)
-```
-download_depot 377160 540810 1558929737289295473
-```
+HD Texture Pack DLC (56371 MB) (If you have it, remove it)
 
 After download each depot manually you can move the contents of each subfolder in this directory into your Fallout 4 installation folder, ensuring you overwrite all files in the destination folder
 
