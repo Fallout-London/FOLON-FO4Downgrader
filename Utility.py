@@ -136,9 +136,12 @@ def Read_Settings():
     return settings
 
 
-def CleanUp(Path):
+def CleanUp():
     import shutil
+    import os
     from time import sleep
+
+    Path = Read_Settings()["SteamPath"]
 
     try:
         shutil.rmtree(Path + "/.DepotDownloader")
