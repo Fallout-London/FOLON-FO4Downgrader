@@ -64,24 +64,28 @@ def SetupSteam():
             url = (
                 "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
             )
-
-        with urllib.request.urlopen(url) as dl_file:
-            with open("FOLON-Downgrader-Files/steam.zip", "wb") as out_file:
-                out_file.write(dl_file.read())
-
+        
         if Util.IsWindows():
+            with urllib.request.urlopen(url) as dl_file:
+                with open("FOLON-Downgrader-Files/steam.zip", "wb") as out_file:
+                    out_file.write(dl_file.read())
+
             with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
                 zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
             Steam = subprocess.Popen(
-                ["FOLON-Downgrader-Files/SteamFiles/steamcmd.exe", "+quit"],
+                [".\\steamcmd.exe", "+quit"],
                 cwd="FOLON-Downgrader-Files/SteamFiles/",
             )
             os.remove("FOLON-Downgrader-Files/steam.zip")
         else:
+            with urllib.request.urlopen(url) as dl_file:
+                with open("FOLON-Downgrader-Files/steamcmd_linux.tar.gz", "wb") as out_file:
+                    out_file.write(dl_file.read())
+
             with tarfile.open("FOLON-Downgrader-Files/steamcmd_linux.tar.gz", "r") as tar:
                 tar.extractall("FOLON-Downgrader-Files/SteamFiles/")
             Steam = subprocess.Popen(
-                ["FOLON-Downgrader-Files/SteamFiles/steamcmd.sh", "+quit"],
+                ["./steamcmd.sh", "+quit"],
                 cwd="FOLON-Downgrader-Files/SteamFiles/",
             )
             os.remove("FOLON-Downgrader-Files/steamcmd_linux.tar.gz")
