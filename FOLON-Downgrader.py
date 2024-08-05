@@ -1,7 +1,7 @@
 import sys
 import Utility as Util
 
-# sys.excepthook = Util.oops
+sys.excepthook = Util.oops
 
 import shutil
 import os
