@@ -76,16 +76,15 @@ def SetupSteam():
                 ["FOLON-Downgrader-Files/SteamFiles/steamcmd.exe", "+quit"],
                 cwd="FOLON-Downgrader-Files/SteamFiles/",
             )
+            os.remove("FOLON-Downgrader-Files/steam.zip")
         else:
-            with tarfile.open("FOLON-Downgrader-Files/steam.zip", "r") as tar:
+            with tarfile.open("FOLON-Downgrader-Files/steamcmd_linux.tar.gz", "r") as tar:
                 tar.extractall("FOLON-Downgrader-Files/SteamFiles/")
             Steam = subprocess.Popen(
                 ["FOLON-Downgrader-Files/SteamFiles/steamcmd.sh", "+quit"],
                 cwd="FOLON-Downgrader-Files/SteamFiles/",
             )
-
-        os.remove("FOLON-Downgrader-Files/steam.zip")
-
+            os.remove("FOLON-Downgrader-Files/steamcmd_linux.tar.gz")
 
 class MainWindow(QMainWindow):
     def __init__(self, steampath=None):
