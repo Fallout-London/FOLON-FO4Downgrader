@@ -12,6 +12,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
 from QLines import *
 import argparse
 from wakepy import keep
+import atexit
 import subprocess
 import urllib.request, zipfile, io, tarfile
 
@@ -1076,12 +1077,7 @@ class MainWindow(QMainWindow):
         except:
             self.SteamPath = Util.WhereSteam()[0]
 
-        if Util.IsBundled():
-            os.execv(sys.executable, sys.argv + ["--clean", self.SteamPath])
-        else:
-            os.execv(
-                sys.executable, ["python"] + sys.argv + ["--clean", self.SteamPath]
-            )
+        atexit.register(lambda: Util.CleanUp(self.SteamPath))
 
 
 def main(steampath=None):
@@ -1137,18 +1133,9 @@ if __name__ == "__main__":
         type=directory,
         help="Path to steam(The directory containing a Fallout4.exe file)",
     )
-    parser.add_argument(
-        "-c",
-        "--clean",
-        required=False,
-        metavar="",
-        help="Clean directory, takes over everything else.",
-    )
     args = parser.parse_args()
 
-    if args.clean:
-        Util.CleanUp(args.clean)
-    elif args.path:
+    if args.path:
         Settings = Util.Read_Settings()
         Settings["Steps"] = 3
         Util.Write_Settings(Settings)
