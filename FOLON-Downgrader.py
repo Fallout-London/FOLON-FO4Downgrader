@@ -72,7 +72,8 @@ def SetupSteam():
 
             with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
                 zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
-            Steam = subprocess.Popen(
+            
+            Steam = subprocess.run(
                 ["FOLON-Downgrader-Files/SteamFiles/steamcmd.exe", "+quit"],
             )
             os.remove("FOLON-Downgrader-Files/steam.zip")
@@ -87,7 +88,7 @@ def SetupSteam():
                 "FOLON-Downgrader-Files/steamcmd_linux.tar.gz", "r"
             ) as tar:
                 tar.extractall("FOLON-Downgrader-Files/SteamFiles/")
-            Steam = subprocess.Popen(
+            Steam = subprocess.run(
                 ["./steamcmd.sh", "+quit"],
                 cwd="FOLON-Downgrader-Files/SteamFiles/",
             )
@@ -1080,15 +1081,17 @@ class MainWindow(QMainWindow):
         except:
             self.SteamPath = Util.WhereSteam()[0]
 
-        if Util.IsBundled():
-            os.execv(sys.executable, sys.argv + ["--clean", self.SteamPath])
-        else:
-            os.execv(
-                sys.executable, ["python"] + sys.argv + ["--clean", self.SteamPath]
-            )
-
 
 def main(steampath=None):
+    if Util.IsWindows():
+        from win32api import SetConsoleCtrlHandler
+
+        SetConsoleCtrlHandler(Util.CleanUp, True)
+    else:
+        from atexit import register
+
+        register(Util.CleanUp)
+
     if os.path.isfile("FOLON-Downgrader-Files/SteamFiles/DepotDownloader.exe"):
         shutil.rmtree("FOLON-Downgrader-Files/SteamFiles")
 
@@ -1141,18 +1144,9 @@ if __name__ == "__main__":
         type=directory,
         help="Path to steam(The directory containing a Fallout4.exe file)",
     )
-    parser.add_argument(
-        "-c",
-        "--clean",
-        required=False,
-        metavar="",
-        help="Clean directory, takes over everything else.",
-    )
     args = parser.parse_args()
 
-    if args.clean:
-        Util.CleanUp(args.clean)
-    elif args.path:
+    if args.path:
         Settings = Util.Read_Settings()
         Settings["Steps"] = 3
         Util.Write_Settings(Settings)
