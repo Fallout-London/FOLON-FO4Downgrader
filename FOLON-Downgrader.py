@@ -15,15 +15,6 @@ from wakepy import keep
 import subprocess
 import urllib.request, zipfile, io, tarfile
 
-if Util.IsWindows():
-    from win32api import SetConsoleCtrlHandler
-
-    SetConsoleCtrlHandler(Util.CleanUp, 1)
-else:
-    from atexit import register
-
-    register(Util.CleanUp)
-
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
 
 
@@ -81,7 +72,7 @@ def SetupSteam():
 
             with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
                 zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
-            Steam = subprocess.Popen(
+            Steam = subprocess.run(
                 ["FOLON-Downgrader-Files/SteamFiles/steamcmd.exe", "+quit"],
             )
             os.remove("FOLON-Downgrader-Files/steam.zip")
@@ -96,7 +87,7 @@ def SetupSteam():
                 "FOLON-Downgrader-Files/steamcmd_linux.tar.gz", "r"
             ) as tar:
                 tar.extractall("FOLON-Downgrader-Files/SteamFiles/")
-            Steam = subprocess.Popen(
+            Steam = subprocess.run(
                 ["./steamcmd.sh", "+quit"],
                 cwd="FOLON-Downgrader-Files/SteamFiles/",
             )
@@ -937,105 +928,105 @@ class MainWindow(QMainWindow):
                 self.activate_tab_4()
 
     def Install(self):
-        # try:
-        #     self.SteamGDlg.close()
-        # except:
-        #     pass
+        try:
+            self.SteamGDlg.close()
+        except:
+            pass
 
-        # if Util.IsWindows():
-        #     self.DepotDownloader = "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe"
-        # else:
-        #     self.DepotDownloader = "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh"
-        #     if os.path.isfile(self.DepotDownloader):
-        #         st = os.stat(self.DepotDownloader)
-        #         os.chmod(
-        #             self.DepotDownloader,
-        #             st.st_mode | stat.S_IEXEC,
-        #         )
+        if Util.IsWindows():
+            self.DepotDownloader = "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe"
+        else:
+            self.DepotDownloader = "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh"
+            if os.path.isfile(self.DepotDownloader):
+                st = os.stat(self.DepotDownloader)
+                os.chmod(
+                    self.DepotDownloader,
+                    st.st_mode | stat.S_IEXEC,
+                )
 
-        # FilePath = "./FOLON-Downgrader-Files/DepotsList.txt"
-        # with open(FilePath, "r") as file:
-        #     lines = file.readlines()
+        FilePath = "./FOLON-Downgrader-Files/DepotsList.txt"
+        with open(FilePath, "r") as file:
+            lines = file.readlines()
 
-        # with open(FilePath, "w") as file:
-        #     file.write("@ShutdownOnFailedCommand 0\n")
-        #     file.write("@NoPromptForPassword 1\n")
-        #     if self.SteamGuardCode == "":
-        #         file.write(f'login "{self.Username}" "{self.Password}"\n')
-        #     else:
-        #         file.write(
-        #             f'login "{self.Username}" "{self.Password}" "{self.SteamGuardCode}"\n'
-        #         )
-        #     file.writelines(lines)
-        # with keep.presenting():
-        #     try:
-        #         with subprocess.Popen(
-        #             [
-        #                 self.DepotDownloader,
-        #                 "+runscript",
-        #                 "../DepotsList.txt",
-        #                 "+validate",
-        #                 "+quit",
-        #             ],
-        #             stdin=subprocess.PIPE,
-        #             stdout=subprocess.PIPE,
-        #             stderr=subprocess.PIPE,
-        #         ) as p:
-        #             stdout, stderr = p.communicate()
-        #     except subprocess.SubprocessError as e:
-        #         print(f"An error occurred: {e}")
+        with open(FilePath, "w") as file:
+            file.write("@ShutdownOnFailedCommand 0\n")
+            file.write("@NoPromptForPassword 1\n")
+            if self.SteamGuardCode == "":
+                file.write(f'login "{self.Username}" "{self.Password}"\n')
+            else:
+                file.write(
+                    f'login "{self.Username}" "{self.Password}" "{self.SteamGuardCode}"\n'
+                )
+            file.writelines(lines)
+        with keep.presenting():
+            try:
+                with subprocess.Popen(
+                    [
+                        self.DepotDownloader,
+                        "+runscript",
+                        "../DepotsList.txt",
+                        "+validate",
+                        "+quit",
+                    ],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                ) as p:
+                    stdout, stderr = p.communicate()
+            except subprocess.SubprocessError as e:
+                print(f"An error occurred: {e}")
 
-        # output = p.communicate()[0].decode("utf-8")
-        # print(output)
-        # if (
-        #     "set_steam_guard_code" in output
-        #     or "Steam Guard Mobile Authenticator app" in output
-        #     or "two-factor" in output
-        # ):
-        #     Settings["LoginResult"] = "Guard"
-        #     Util.Write_Settings(Settings)
-        #     self.DownloadFailed = True
-        # elif "(Rate Limit Exceeded)" in output:
-        #     Settings["LoginResult"] = "Rate"
-        #     Util.Write_Settings(Settings)
-        #     self.DownloadFailed = True
-        # elif "(Invalid Login Auth Code)" in output:
-        #     Settings["LoginResult"] = "Guard"
-        #     Util.Write_Settings(Settings)
-        #     self.DownloadFailed = True
-        # elif "(Invalid Password)" in output:
-        #     Settings["LoginResult"] = "PasswordFail"
-        #     Util.Write_Settings(Settings)
-        #     self.DownloadFailed = True
-        # else:
-        self.Downloaded += 1
+        output = p.communicate()[0].decode("utf-8")
+        print(output)
+        if (
+            "set_steam_guard_code" in output
+            or "Steam Guard Mobile Authenticator app" in output
+            or "two-factor" in output
+        ):
+            Settings["LoginResult"] = "Guard"
+            Util.Write_Settings(Settings)
+            self.DownloadFailed = True
+        elif "(Rate Limit Exceeded)" in output:
+            Settings["LoginResult"] = "Rate"
+            Util.Write_Settings(Settings)
+            self.DownloadFailed = True
+        elif "(Invalid Login Auth Code)" in output:
+            Settings["LoginResult"] = "Guard"
+            Util.Write_Settings(Settings)
+            self.DownloadFailed = True
+        elif "(Invalid Password)" in output:
+            Settings["LoginResult"] = "PasswordFail"
+            Util.Write_Settings(Settings)
+            self.DownloadFailed = True
+        else:
+            self.Downloaded += 1
 
-        # with open(FilePath, "r") as file:
-        #     data = file.read().splitlines(True)
+        with open(FilePath, "r") as file:
+            data = file.read().splitlines(True)
 
-        # with open(FilePath, "w") as file:
-        #     file.writelines(data[3:])
+        with open(FilePath, "w") as file:
+            file.writelines(data[3:])
 
     def MoveFiles(self):
-        # for i in os.listdir(
-        #     "FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"
-        # ):
-        #     Util.MoveFiles(
-        #         f"FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160/{i}",
-        #         self.SteamPath,
-        #     )
+        for i in os.listdir(
+            "FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"
+        ):
+            Util.MoveFiles(
+                f"FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160/{i}",
+                self.SteamPath,
+            )
         self.Downloaded += 1
 
     def RemoveCC(self):
-        # for i in os.listdir(self.SteamPath + "/Data"):
-        #     if i[:2] == "cc":
-        #         os.remove(self.SteamPath + "/Data/" + i)
+        for i in os.listdir(self.SteamPath + "/Data"):
+            if i[:2] == "cc":
+                os.remove(self.SteamPath + "/Data/" + i)
         self.Downloaded += 1
 
     def RemoveHD(self):
-        # for i in os.listdir(self.SteamPath + "/Data"):
-        #     if i[:22] == "DLCUltraHighResolution":
-        #         os.remove(self.SteamPath + "/Data/" + i)
+        for i in os.listdir(self.SteamPath + "/Data"):
+            if i[:22] == "DLCUltraHighResolution":
+                os.remove(self.SteamPath + "/Data/" + i)
         self.Downloaded += 1
 
     ##########################################################################################
@@ -1091,6 +1082,15 @@ class MainWindow(QMainWindow):
 
 
 def main(steampath=None):
+    if Util.IsWindows():
+        from win32api import SetConsoleCtrlHandler
+
+        SetConsoleCtrlHandler(Util.CleanUp, True)
+    else:
+        from atexit import register
+
+        register(Util.CleanUp)
+
     if os.path.isfile("FOLON-Downgrader-Files/SteamFiles/DepotDownloader.exe"):
         shutil.rmtree("FOLON-Downgrader-Files/SteamFiles")
 

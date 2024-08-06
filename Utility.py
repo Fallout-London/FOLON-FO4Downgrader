@@ -136,7 +136,7 @@ def Read_Settings():
     return settings
 
 
-def CleanUp():
+def CleanUp(*args):
     import shutil
     import os
     from time import sleep
