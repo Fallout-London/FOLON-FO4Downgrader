@@ -72,6 +72,7 @@ def SetupSteam():
 
             with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
                 zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
+            
             Steam = subprocess.run(
                 ["FOLON-Downgrader-Files/SteamFiles/steamcmd.exe", "+quit"],
             )
