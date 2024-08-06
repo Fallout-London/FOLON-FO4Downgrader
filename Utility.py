@@ -143,6 +143,9 @@ def CleanUp():
 
     Path = Read_Settings()["SteamPath"]
 
+    if Path == "":
+        Path = WhereSteam()[0]
+
     try:
         shutil.rmtree(Path + "/.DepotDownloader")
     except:
@@ -151,6 +154,7 @@ def CleanUp():
         shutil.rmtree("__pycache__")
     except:
         pass
+    os.mkdir("AAAAAAAAAAAAAA")
 
 
 def BlockUpdates():

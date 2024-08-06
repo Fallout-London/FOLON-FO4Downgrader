@@ -12,9 +12,17 @@ from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
 from QLines import *
 import argparse
 from wakepy import keep
-import atexit
 import subprocess
 import urllib.request, zipfile, io, tarfile
+
+if Util.IsWindows():
+    from win32api import SetConsoleCtrlHandler
+
+    SetConsoleCtrlHandler(Util.CleanUp, 1)
+else:
+    from atexit import register
+
+    register(Util.CleanUp)
 
 from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
 
@@ -1080,8 +1088,6 @@ class MainWindow(QMainWindow):
             print(self.SteamPath)
         except:
             self.SteamPath = Util.WhereSteam()[0]
-
-        atexit.register(Util.CleanUp)
 
 
 def main(steampath=None):
