@@ -880,7 +880,11 @@ class MainWindow(QMainWindow):
 
     def InstallInit(self):
         Settings = Util.Read_Settings()
-        print(self.DownloadFailed)
+        print(
+            "Internal Download fail: "
+            + self.DownloadFailed
+            + ", Don't worry about this"
+        )
         if self.DownloadFailed:
             result = Settings["LoginResult"]
             print(result)
@@ -965,17 +969,11 @@ class MainWindow(QMainWindow):
         with keep.presenting():
             try:
                 self.SteamProcess = subprocess.Popen(
-                    [
-                        self.DepotDownloader,
-                        "+runscript",
-                        "../DepotsList.txt",
-                        "+validate",
-                    ],
+                    [self.DepotDownloader, "+runscript", "../DepotsList.txt", "+quit"],
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                 )
-                stdout, stderr = self.SteamProcess.communicate()
             except subprocess.SubprocessError as e:
                 print(f"An error occurred: {e}")
 
