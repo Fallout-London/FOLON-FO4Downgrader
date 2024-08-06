@@ -147,7 +147,7 @@ def CleanUp(*args):
         Path = WhereSteam()[0]
 
     try:
-        shutil.rmtree(Path + "/.DepotDownloader")
+        shutil.rmtree(Path + "/SteamFiles")
     except:
         pass
     try:
