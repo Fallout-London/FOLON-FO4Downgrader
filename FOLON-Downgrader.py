@@ -56,45 +56,6 @@ def SetupFont():
     QFontDatabase.addApplicationFont("FOLON-Downgrader-Files/Fonts/Overseer.otf")
 
 
-def SetupSteam():
-    if not os.path.isdir("FOLON-Downgrader-Files/SteamFiles"):
-        if Util.IsWindows():
-            url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip"
-        else:
-            url = (
-                "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
-            )
-
-        if Util.IsWindows():
-            with urllib.request.urlopen(url) as dl_file:
-                with open("FOLON-Downgrader-Files/steam.zip", "wb") as out_file:
-                    out_file.write(dl_file.read())
-
-            with zipfile.ZipFile("FOLON-Downgrader-Files/steam.zip", "r") as zip_ref:
-                zip_ref.extractall("FOLON-Downgrader-Files/SteamFiles/")
-            
-            Steam = subprocess.run(
-                ["FOLON-Downgrader-Files/SteamFiles/steamcmd.exe", "+quit"],
-            )
-            os.remove("FOLON-Downgrader-Files/steam.zip")
-        else:
-            with urllib.request.urlopen(url) as dl_file:
-                with open(
-                    "FOLON-Downgrader-Files/steamcmd_linux.tar.gz", "wb"
-                ) as out_file:
-                    out_file.write(dl_file.read())
-
-            with tarfile.open(
-                "FOLON-Downgrader-Files/steamcmd_linux.tar.gz", "r"
-            ) as tar:
-                tar.extractall("FOLON-Downgrader-Files/SteamFiles/")
-            Steam = subprocess.run(
-                ["./steamcmd.sh", "+quit"],
-                cwd="FOLON-Downgrader-Files/SteamFiles/",
-            )
-            os.remove("FOLON-Downgrader-Files/steamcmd_linux.tar.gz")
-
-
 class MainWindow(QMainWindow):
     def __init__(self, steampath=None):
         super().__init__()
@@ -313,6 +274,47 @@ class MainWindow(QMainWindow):
 
         print("Not valid dir")
 
+    def SetupSteam(self):
+        if not os.path.isdir(f"{self.SteamPath}/SteamFiles"):
+            os.mkdir(f"{self.SteamPath}/SteamFiles")
+
+        if Util.IsWindows():
+            url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip"
+        else:
+            url = (
+                "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
+            )
+
+        if Util.IsWindows():
+            with urllib.request.urlopen(url) as dl_file:
+                with open(f"{self.SteamPath}/SteamFiles/steam.zip", "wb") as out_file:
+                    out_file.write(dl_file.read())
+
+            with zipfile.ZipFile(
+                f"{self.SteamPath}/SteamFiles/steam.zip", "r"
+            ) as zip_ref:
+                zip_ref.extractall(f"{self.SteamPath}/SteamFiles/")
+            Steam = subprocess.run(
+                [f"{self.SteamPath}/SteamFiles/steamcmd.exe", "+quit"],
+            )
+            os.remove(f"{self.SteamPath}/SteamFiles/steam.zip")
+        else:
+            with urllib.request.urlopen(url) as dl_file:
+                with open(
+                    f"{self.SteamPath}/SteamFiles/steamcmd_linux.tar.gz", "wb"
+                ) as out_file:
+                    out_file.write(dl_file.read())
+
+            with tarfile.open(
+                f"{self.SteamPath}/SteamFiles/steamcmd_linux.tar.gz", "r"
+            ) as tar:
+                tar.extractall(f"{self.SteamPath}/SteamFiles/")
+            Steam = subprocess.run(
+                ["./steamcmd.sh", "+quit"],
+                cwd=f"{self.SteamPath}/SteamFiles/",
+            )
+            os.remove(f"{self.SteamPath}/SteamFiles/steamcmd_linux.tar.gz")
+
     def WrongPathDialog2(self, path):  # GUI Backend
         if Util.IsWritable(path):
             if "Fallout4.exe" in os.listdir(path):
@@ -449,9 +451,9 @@ class MainWindow(QMainWindow):
         self.Password = self.PasswordEntry.text()
         self.Username = self.UsernameEntry.text()
 
-        if not os.path.isdir("FOLON-Downgrader-Files/SteamFiles/"):
+        if not os.path.isdir(f"{self.SteamPath}/SteamFiles/"):
             self.Loading(
-                SetupSteam,
+                self.SetupSteam,
                 text="Loading Steam backend",
                 PostFunction=self.SteamSubmit,
             )
@@ -827,7 +829,6 @@ class MainWindow(QMainWindow):
     ##########################################################################################
 
     def tab3UI(self):  # GUI
-        self.SteamFiles = "FOLON-Downgrader-Files/SteamFiles/depots"
         self.Downloaded = 0
         self.DownloadFailed = False
         layout = QFormLayout()
@@ -901,7 +902,7 @@ class MainWindow(QMainWindow):
                 self.Loading(
                     self.Install,
                     text=f"Downloading depots, grab a cuppa tea, innit'",
-                    ProgressDir="FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160",
+                    ProgressDir=f"{self.SteamPath}/SteamFiles/steamapps/content/app_377160",
                     ProgressMax=117,
                     PostFunction=self.InstallInit,
                 )
@@ -909,7 +910,7 @@ class MainWindow(QMainWindow):
                 self.Loading(
                     self.MoveFiles,
                     text=f"Moving files to {self.SteamPath}",
-                    ProgressDir="FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160",
+                    ProgressDir=f"{self.SteamPath}/SteamFiles/steamapps/content/app_377160",
                     ProgressMax=117,
                     PostFunction=self.InstallInit,
                 )
@@ -935,9 +936,9 @@ class MainWindow(QMainWindow):
             pass
 
         if Util.IsWindows():
-            self.DepotDownloader = "FOLON-Downgrader-Files/SteamFiles/steamcmd.exe"
+            self.DepotDownloader = f"{self.SteamPath}/SteamFiles/steamcmd.exe"
         else:
-            self.DepotDownloader = "FOLON-Downgrader-Files/SteamFiles/steamcmd.sh"
+            self.DepotDownloader = f"{self.SteamPath}/SteamFiles/steamcmd.sh"
             if os.path.isfile(self.DepotDownloader):
                 st = os.stat(self.DepotDownloader)
                 os.chmod(
@@ -945,7 +946,7 @@ class MainWindow(QMainWindow):
                     st.st_mode | stat.S_IEXEC,
                 )
 
-        FilePath = "./FOLON-Downgrader-Files/DepotsList.txt"
+        FilePath = "FOLON-Downgrader-Files/DepotsList.txt"
         with open(FilePath, "r") as file:
             lines = file.readlines()
 
@@ -965,7 +966,7 @@ class MainWindow(QMainWindow):
                     [
                         self.DepotDownloader,
                         "+runscript",
-                        "../DepotsList.txt",
+                        os.path.abspath("FOLON-Downgrader-Files/DepotsList.txt"),
                         "+validate",
                         "+quit",
                     ],
@@ -1010,10 +1011,10 @@ class MainWindow(QMainWindow):
 
     def MoveFiles(self):
         for i in os.listdir(
-            "FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160"
+            f"{self.SteamPath}/SteamFiles/steamapps/content/app_377160"
         ):
             Util.MoveFiles(
-                f"FOLON-Downgrader-Files/SteamFiles/steamapps/content/app_377160/{i}",
+                f"{self.SteamPath}/SteamFiles/steamapps/content/app_377160/{i}",
                 self.SteamPath,
             )
         self.Downloaded += 1
@@ -1081,17 +1082,15 @@ class MainWindow(QMainWindow):
         except:
             self.SteamPath = Util.WhereSteam()[0]
 
+        if Util.IsBundled():
+            os.execv(sys.executable, sys.argv + ["--clean", self.SteamPath])
+        else:
+            os.execv(
+                sys.executable, ["python"] + sys.argv + ["--clean", self.SteamPath]
+            )
+
 
 def main(steampath=None):
-    if Util.IsWindows():
-        from win32api import SetConsoleCtrlHandler
-
-        SetConsoleCtrlHandler(Util.CleanUp, True)
-    else:
-        from atexit import register
-
-        register(Util.CleanUp)
-
     if os.path.isfile("FOLON-Downgrader-Files/SteamFiles/DepotDownloader.exe"):
         shutil.rmtree("FOLON-Downgrader-Files/SteamFiles")
 
@@ -1144,9 +1143,18 @@ if __name__ == "__main__":
         type=directory,
         help="Path to steam(The directory containing a Fallout4.exe file)",
     )
+    parser.add_argument(
+        "-c",
+        "--clean",
+        required=False,
+        metavar="",
+        help="Clean directory, takes over everything else.",
+    )
     args = parser.parse_args()
 
-    if args.path:
+    if args.clean:
+        Util.CleanUp(args.clean)
+    elif args.path:
         Settings = Util.Read_Settings()
         Settings["Steps"] = 3
         Util.Write_Settings(Settings)
