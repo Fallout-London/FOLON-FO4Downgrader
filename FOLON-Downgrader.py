@@ -396,9 +396,8 @@ class MainWindow(QMainWindow):
 
         self.SteamGuardCheck = QCheckBox()
         self.SteamGuardCheck.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.SteamGuardCheck.setChecked(True)
 
-        CheckLayout.addWidget(QLabel("Using mobile Steam Guard:"))
+        CheckLayout.addWidget(QLabel("Using <b>mobile</b> Steam Guard:"))
         CheckLayout.addWidget(self.SteamGuardCheck)
 
         CheckLayout.addStretch()
@@ -881,8 +880,8 @@ class MainWindow(QMainWindow):
     def InstallInit(self):
         Settings = Util.Read_Settings()
         print(
-            "Internal Download fail: "
-            + self.DownloadFailed
+            "Internal Download fail is "
+            + str(self.DownloadFailed)
             + ", Don't worry about this"
         )
         if self.DownloadFailed:
@@ -967,40 +966,57 @@ class MainWindow(QMainWindow):
                 )
             file.writelines(lines)
         with keep.presenting():
-            try:
-                self.SteamProcess = subprocess.Popen(
-                    [self.DepotDownloader, "+runscript", "../DepotsList.txt", "+quit"],
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
-            except subprocess.SubprocessError as e:
-                print(f"An error occurred: {e}")
+            self.SteamProcess = subprocess.Popen(
+                [self.DepotDownloader, "+runscript", "../DepotsList.txt", "+quit"],
+                shell=True,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            output = ""
+
+            # Poll process for new output until finished
+            for line in iter(self.SteamProcess.stdout.readline, ""):
+                if line != b"":
+                    print(line)
+                    output += line.decode("utf-8")
+                    if (
+                        "set_steam_guard_code" in output
+                        or "Steam Guard Mobile Authenticator app" in output
+                        or "two-factor" in output
+                    ):
+                        Settings["LoginResult"] = "Guard"
+                        Util.Write_Settings(Settings)
+                        self.DownloadFailed = True
+                        self.SteamProcess.kill()
+                    elif "(Rate Limit Exceeded)" in output:
+                        Settings["LoginResult"] = "Rate"
+                        Util.Write_Settings(Settings)
+                        self.DownloadFailed = True
+                        self.SteamProcess.kill()
+                    elif "(Invalid Login Auth Code)" in output:
+                        Settings["LoginResult"] = "Guard"
+                        Util.Write_Settings(Settings)
+                        self.DownloadFailed = True
+                        self.SteamProcess.kill()
+                    elif "(Invalid Password)" in output:
+                        Settings["LoginResult"] = "PasswordFail"
+                        Util.Write_Settings(Settings)
+                        self.DownloadFailed = True
+                        self.SteamProcess.kill()
+                    else:
+                        self.Downloaded += 1
+
+            self.SteamProcess.wait()
+            exitCode = self.SteamProcess.returncode
+
+            if exitCode == 0:
+                return output
+            else:
+                raise Exception(command, exitCode, output)
 
         output = self.SteamProcess.communicate()[0].decode("utf-8")
         print(output)
-        if (
-            "set_steam_guard_code" in output
-            or "Steam Guard Mobile Authenticator app" in output
-            or "two-factor" in output
-        ):
-            Settings["LoginResult"] = "Guard"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        elif "(Rate Limit Exceeded)" in output:
-            Settings["LoginResult"] = "Rate"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        elif "(Invalid Login Auth Code)" in output:
-            Settings["LoginResult"] = "Guard"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        elif "(Invalid Password)" in output:
-            Settings["LoginResult"] = "PasswordFail"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        else:
-            self.Downloaded += 1
 
         with open(FilePath, "r") as file:
             data = file.read().splitlines(True)
