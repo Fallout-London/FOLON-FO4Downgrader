@@ -1,7 +1,8 @@
 import sys
 import Utility as Util
 
-sys.excepthook = Util.oops
+if Util.IsBundled():
+    sys.excepthook = Util.oops
 
 import shutil
 import os
@@ -187,6 +188,28 @@ class MainWindow(QMainWindow):
         if PostFunction != None:
             self.__thread.finished.connect(PostFunction)
         self.__thread.start()
+
+    def ErrorBox(self, Message, Title="Title", breaking=False):
+        try:
+            self.SteamGDlg.close()
+        except:
+            pass
+        try:
+            self.GuideDialog.close()
+        except:
+            pass
+        RateDialog = QDialog()
+        RateDialogLayout = QFormLayout()
+        RateDialogLayout.addRow(QLabel(f"<h1>{Title}</h1>"))
+        RateDialogLayout.addRow(QLabel(f"<p>{Message}</p>"))
+
+        RateDialogButton = QPushButton(text="Close")
+        if breaking:
+            RateDialogButton.pressed.connect(self.CloseRateDialog)
+        RateDialogLayout.addRow(RateDialogButton)
+
+        RateDialog.setLayout(RateDialogLayout)
+        RateDialog.exec()
 
     ##########################################################################################
     # STEAM PATH                                                                             #
@@ -938,13 +961,35 @@ class MainWindow(QMainWindow):
         if Util.IsWindows():
             self.DepotDownloader = f"{self.SteamPath}/SteamFiles/steamcmd.exe"
         else:
-            self.DepotDownloader = "./steamcmd.sh"
-            if os.path.isfile(self.DepotDownloader):
-                st = os.stat(self.DepotDownloader)
+            if os.path.isfile(f"{self.SteamPath}/SteamFiles/steamcmd.sh"):
+                st = os.stat(f"{self.SteamPath}/SteamFiles/steamcmd.sh")
                 os.chmod(
-                    self.DepotDownloader,
+                    f"{self.SteamPath}/SteamFiles/steamcmd.sh",
                     st.st_mode | stat.S_IEXEC,
                 )
+                st = os.stat(f"{self.SteamPath}/SteamFiles/linux32/steamcmd")
+                os.chmod(
+                    f"{self.SteamPath}/SteamFiles/linux32/steamcmd",
+                    st.st_mode | stat.S_IEXEC,
+                )
+                LibArray = [
+                    "libdl.so.2",
+                    "librt.so.1",
+                    "libm.so.6",
+                    "libpthread.so.0",
+                    "libc.so.6",
+                    "/lib/ld-linux.so.2",
+                ]
+
+                result = subprocess.run(
+                    ["ldconfig", "-p"], capture_output=True, text=True
+                )
+
+                for i in LibArray:
+                    if i in result.stdout:
+                        print(i, i in result.stdout)
+                    else:
+                        self.ErrorBox(f"Missing {i}, please just google it.")
 
         FilePath = "FOLON-Downgrader-Files/DepotsList.txt"
         with open(FilePath, "r") as file:
@@ -960,64 +1005,96 @@ class MainWindow(QMainWindow):
                     f'login "{self.Username}" "{self.Password}" "{self.SteamGuardCode}"\n'
                 )
             file.writelines(lines)
-        with keep.presenting():
-            try:
-                if Util.IsWindows():
-                    with subprocess.Popen(
-                        [
-                            self.DepotDownloader,
-                            "+runscript",
-                            os.path.abspath("FOLON-Downgrader-Files/DepotsList.txt"),
-                            "+validate",
-                            "+quit",
-                        ],
-                        stdin=subprocess.PIPE,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                    ) as p:
-                        stdout, stderr = p.communicate()
-                else:
-                    with subprocess.Popen(
-                        [
-                            self.DepotDownloader,
-                            "+runscript",
-                            os.path.abspath("FOLON-Downgrader-Files/DepotsList.txt"),
-                            "+validate",
-                            "+quit",
-                        ],
-                        cwd=f"{self.SteamPath}/SteamFiles/",
-                        stdin=subprocess.PIPE,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                    ) as p:
-                        stdout, stderr = p.communicate()
-            except subprocess.SubprocessError as e:
-                print(f"An error occurred: {e}")
+        # with keep.presenting():
+        try:
+            if Util.IsWindows():
+                popen = subprocess.Popen(
+                    [
+                        self.DepotDownloader,
+                        "+runscript",
+                        os.path.abspath("FOLON-Downgrader-Files/DepotsList.txt"),
+                        "+quit",
+                    ],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    universal_newlines=True,
+                )
+            else:
+                popen = subprocess.Popen(
+                    [
+                        "./steamcmd.sh",
+                        "+runscript",
+                        os.path.abspath("FOLON-Downgrader-Files/DepotsList.txt"),
+                        "+quit",
+                    ],
+                    cwd=f"{self.SteamPath}/SteamFiles/",
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    universal_newlines=True,
+                )
+            output = ""
 
-        output = p.communicate()[0].decode("utf-8")
+            # Poll process for new output until finished
+            for line in iter(popen.stdout.readline, ""):
+                print(line)
+                output += line
+                if (
+                    "set_steam_guard_code" in output
+                    or "Steam Guard Mobile Authenticator app" in output
+                    or "two-factor" in output
+                ):
+                    Settings["LoginResult"] = "Guard"
+                    Util.Write_Settings(Settings)
+                    self.DownloadFailed = True
+                    with open(FilePath, "r") as file:
+                        data = file.read().splitlines(True)
+
+                    with open(FilePath, "w") as file:
+                        file.writelines(data[3:])
+                elif "(Rate Limit Exceeded)" in output:
+                    Settings["LoginResult"] = "Rate"
+                    Util.Write_Settings(Settings)
+                    self.DownloadFailed = True
+                    with open(FilePath, "r") as file:
+                        data = file.read().splitlines(True)
+
+                    with open(FilePath, "w") as file:
+                        file.writelines(data[3:])
+                elif "(Invalid Login Auth Code)" in output:
+                    Settings["LoginResult"] = "Guard"
+                    Util.Write_Settings(Settings)
+                    self.DownloadFailed = True
+                    with open(FilePath, "r") as file:
+                        data = file.read().splitlines(True)
+
+                    with open(FilePath, "w") as file:
+                        file.writelines(data[3:])
+                elif "(Invalid Password)" in output:
+                    Settings["LoginResult"] = "PasswordFail"
+                    Util.Write_Settings(Settings)
+                    self.DownloadFailed = True
+                    with open(FilePath, "r") as file:
+                        data = file.read().splitlines(True)
+
+                    with open(FilePath, "w") as file:
+                        file.writelines(data[3:])
+
+            popen.wait()
+            exitCode = popen.returncode
+            print(exitCode)
+
+            if exitCode == 0:
+                return output
+                self.Downloaded += 1
+            else:
+                raise Exception(command, exitCode, output)
+        except subprocess.SubprocessError as e:
+            print(f"An error occurred: {e}")
+
+        # output = popen.communicate()[0].decode("utf-8")
         print(output)
-        if (
-            "set_steam_guard_code" in output
-            or "Steam Guard Mobile Authenticator app" in output
-            or "two-factor" in output
-        ):
-            Settings["LoginResult"] = "Guard"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        elif "(Rate Limit Exceeded)" in output:
-            Settings["LoginResult"] = "Rate"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        elif "(Invalid Login Auth Code)" in output:
-            Settings["LoginResult"] = "Guard"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        elif "(Invalid Password)" in output:
-            Settings["LoginResult"] = "PasswordFail"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        else:
-            self.Downloaded += 1
 
         with open(FilePath, "r") as file:
             data = file.read().splitlines(True)
