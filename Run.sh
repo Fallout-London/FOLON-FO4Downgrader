@@ -5,5 +5,5 @@ source .venv/bin/activate
 python3 -m pip install -r requirements-linux.txt
 
 if ! env QT_QPA_PLATFORM=xcb WAYLAND_DISPLAY= python3 ./FOLON-Downgrader.py; then
-    echo "Please check dependencies from here https://developer.valvesoftware.com/wiki/SteamCMD#Manually and if libgl is installed"
+    echo "Please check dependencies from here https://github.com/Fallout-London/FOLON-FO4Downgrader/blob/main/LinuxDeps.md"
 fi
