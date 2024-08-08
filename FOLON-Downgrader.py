@@ -1007,19 +1007,34 @@ class MainWindow(QMainWindow):
             file.writelines(lines)
         # with keep.presenting():
         try:
-            with subprocess.Popen(
-                [
-                    self.DepotDownloader,
-                    "+runscript",
-                    "../DepotsList.txt",
-                    "+validate",
-                    "+quit",
-                ],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            ) as p:
-                stdout, stderr = p.communicate()
+            if util.IsWindows()
+                with subprocess.Popen(
+                    [
+                        self.DepotDownloader,
+                        "+runscript",
+                        "../DepotsList.txt",
+                        "+validate",
+                        "+quit",
+                    ],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                ) as p:
+                    stdout, stderr = p.communicate()
+            else:
+                popen = subprocess.Popen(
+                    [
+                        "./steamcmd.sh",
+                        "+runscript",
+                        os.path.abspath("FOLON-Downgrader-Files/DepotsList.txt"),
+                        "+quit",
+                    ],
+                    cwd=f"{self.SteamPath}/SteamFiles/",
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                ) as p:
+                    stdout, stderr = p.communicate()
         except subprocess.SubprocessError as e:
             print(f"An error occurred: {e}")
 
