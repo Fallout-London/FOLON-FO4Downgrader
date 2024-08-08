@@ -907,7 +907,7 @@ class MainWindow(QMainWindow):
 
     def InstallInit(self):
         Settings = Util.Read_Settings()
-        print(self.DownloadFailed)
+        print("Internal download failure, this is not a problem so don't worry: " + self.DownloadFailed)
         if self.DownloadFailed:
             result = Settings["LoginResult"]
             print(result)
