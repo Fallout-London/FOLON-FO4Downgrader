@@ -1022,7 +1022,7 @@ class MainWindow(QMainWindow):
                 ) as p:
                     stdout, stderr = p.communicate()
             else:
-                popen = subprocess.Popen(
+                with subprocess.Popen(
                     [
                         "./steamcmd.sh",
                         "+runscript",
