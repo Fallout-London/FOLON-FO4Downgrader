@@ -1007,7 +1007,7 @@ class MainWindow(QMainWindow):
             file.writelines(lines)
         # with keep.presenting():
         try:
-            if util.IsWindows():
+            if Util.IsWindows():
                 with subprocess.Popen(
                     [
                         self.DepotDownloader,
