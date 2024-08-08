@@ -7,6 +7,8 @@ When installing on linux, you'll need the 32-bit libraries specified on the [val
 Ubuntu
 ```
 sudo apt-get install lib32stdc++6
+sudo apt-get install build-essential
+sudo apt-get install libx11-xcb-dev libglu1-mesa-dev
 ```
 If you get an error for missing dependencies or broken packages, run the following
 ```
