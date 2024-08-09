@@ -1185,6 +1185,9 @@ def main(steampath=None):
 def Linux(Path:str="",Username:str="",Password:str="",SteamAuth:bool=False):
     if Path == "":
         Path = input("What is the path to Fallout4?: ")
+        if Path == "":
+            print("Please input a path")
+            Linux()
         if not "Fallout4.exe" in os.listdir(Path):
             print("Fallout4.exe not in folder")
             Linux()
@@ -1213,8 +1216,13 @@ def Linux(Path:str="",Username:str="",Password:str="",SteamAuth:bool=False):
     if Username == "":
         print("If \" or \\ is in either your username or password preface it with another \\")
         Username = input("What is your Steam Username?: ")
+        if Username == "":
+            Linux(Path=Path)
+
     if Password == "":
         Password = input("What is your Steam Password?: ")
+        if Password == "":
+            Linux(Path=Path,Username=Username)
 
     SteamGuardBool = False
     
@@ -1238,6 +1246,10 @@ def Linux(Path:str="",Username:str="",Password:str="",SteamAuth:bool=False):
     SteamGuardCode = False
     if SteamGuardBool or SteamAuth:
         SteamGuardCode = input("What is your Steam Guard code?: ")
+        if SteamGuardCode == "":
+            Bool = input("Code is empty, are you sure? (Y/N):" )
+            if "N" in Bool or "No" in Bool or "n" in Bool or "no" in Bool or "false" in Bool or "False" in Bool:
+                Linux(Path=Path, Username=Username, Password=Password)
     
     url = "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/DepotsList.txt"
     with urllib.request.urlopen(url) as dl_file:
