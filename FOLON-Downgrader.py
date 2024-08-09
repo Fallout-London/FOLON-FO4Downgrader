@@ -907,7 +907,10 @@ class MainWindow(QMainWindow):
 
     def InstallInit(self):
         Settings = Util.Read_Settings()
-        print("Internal download failure, this is not a problem so don't worry: " + str(self.DownloadFailed))
+        print(
+            "Internal download failure, this is not a problem so don't worry: "
+            + str(self.DownloadFailed)
+        )
         if self.DownloadFailed:
             result = Settings["LoginResult"]
             print(result)
@@ -1182,39 +1185,41 @@ def main(steampath=None):
 
     sys.exit(app.exec())
 
-def Linux(Path:str="",Username:str="",Password:str="",SteamAuth:bool=False):
+
+def Linux(
+    Path: str = "", Username: str = "", Password: str = "", SteamAuth: bool = False
+):
     if Path == "":
         Path = input("What is the path to Fallout4?: ")
-        if Path == "":
+        if not os.path.isdir(Path):
             print("Please input a path")
             Linux()
-        if not "Fallout4.exe" in os.listdir(Path):
+        elif Path == "":
+            print("Please input a path")
+            Linux()
+        elif not "Fallout4.exe" in os.listdir(Path):
             print("Fallout4.exe not in folder")
             Linux()
-    
+
     if not os.path.isdir(f"{Path}/SteamFiles"):
         print("Downloading steam...")
         os.mkdir(f"{Path}/SteamFiles")
 
-        url = (
-            "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
-        )
+        url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
 
         with urllib.request.urlopen(url) as dl_file:
-            with open(
-                f"{Path}/SteamFiles/steamcmd_linux.tar.gz", "wb"
-            ) as out_file:
+            with open(f"{Path}/SteamFiles/steamcmd_linux.tar.gz", "wb") as out_file:
                 out_file.write(dl_file.read())
 
-        with tarfile.open(
-            f"{Path}/SteamFiles/steamcmd_linux.tar.gz", "r"
-        ) as tar:
+        with tarfile.open(f"{Path}/SteamFiles/steamcmd_linux.tar.gz", "r") as tar:
             tar.extractall(f"{Path}/SteamFiles/")
         os.remove(f"{Path}/SteamFiles/steamcmd_linux.tar.gz")
         print("Downloaded Steam!")
-    
+
     if Username == "":
-        print("If \" or \\ is in either your username or password preface it with another \\")
+        print(
+            'If " or \\ is in either your username or password preface it with another \\'
+        )
         Username = input("What is your Steam Username?: ")
         if Username == "":
             Linux(Path=Path)
@@ -1222,64 +1227,114 @@ def Linux(Path:str="",Username:str="",Password:str="",SteamAuth:bool=False):
     if Password == "":
         Password = input("What is your Steam Password?: ")
         if Password == "":
-            Linux(Path=Path,Username=Username)
+            Linux(Path=Path, Username=Username)
 
     SteamGuardBool = False
-    
+
     if not SteamAuth:
         SteamGuardPrompt1 = input("Do you have steam guard on mobile? (Y/N): ")
-        if "Y" in SteamGuardPrompt1 or "Yes" in SteamGuardPrompt1 or "y" in SteamGuardPrompt1 or "yes" in SteamGuardPrompt1 or "true" in SteamGuardPrompt1 or "True" in SteamGuardPrompt1:
+        if (
+            "Y" in SteamGuardPrompt1
+            or "Yes" in SteamGuardPrompt1
+            or "y" in SteamGuardPrompt1
+            or "yes" in SteamGuardPrompt1
+            or "true" in SteamGuardPrompt1
+            or "True" in SteamGuardPrompt1
+        ):
             SteamGuardBool = True
-        elif "N" in SteamGuardPrompt1 or "No" in SteamGuardPrompt1 or "n" in SteamGuardPrompt1 or "no" in SteamGuardPrompt1 or "false" in SteamGuardPrompt1 or "False" in SteamGuardPrompt1:
+        elif (
+            "N" in SteamGuardPrompt1
+            or "No" in SteamGuardPrompt1
+            or "n" in SteamGuardPrompt1
+            or "no" in SteamGuardPrompt1
+            or "false" in SteamGuardPrompt1
+            or "False" in SteamGuardPrompt1
+        ):
             SteamGuardBool = False
-        
+
         SteamGuardPrompt2 = input("Do you have steam guard on email? (Y/N): ")
-        if "Y" in SteamGuardPrompt2 or "Yes" in SteamGuardPrompt2 or "y" in SteamGuardPrompt2 or "yes" in SteamGuardPrompt2 or "true" in SteamGuardPrompt2 or "True" in SteamGuardPrompt2:
+        if (
+            "Y" in SteamGuardPrompt2
+            or "Yes" in SteamGuardPrompt2
+            or "y" in SteamGuardPrompt2
+            or "yes" in SteamGuardPrompt2
+            or "true" in SteamGuardPrompt2
+            or "True" in SteamGuardPrompt2
+        ):
             subprocess.run(
-                ["./steamcmd.sh", "+login", f'{Username}', f'{Password}', "+quit"],
+                ["./steamcmd.sh", "+login", f"{Username}", f"{Password}", "+quit"],
                 cwd=f"{Path}/SteamFiles/",
             )
-            Linux(Path=Path, Username=Username, Password=Password,SteamAuth=True)
-        elif "N" in SteamGuardPrompt2 or "No" in SteamGuardPrompt2 or "n" in SteamGuardPrompt2 or "no" in SteamGuardPrompt2 or "false" in SteamGuardPrompt2 or "False" in SteamGuardPrompt2:
+            Linux(Path=Path, Username=Username, Password=Password, SteamAuth=True)
+        elif (
+            "N" in SteamGuardPrompt2
+            or "No" in SteamGuardPrompt2
+            or "n" in SteamGuardPrompt2
+            or "no" in SteamGuardPrompt2
+            or "false" in SteamGuardPrompt2
+            or "False" in SteamGuardPrompt2
+        ):
             SteamGuardBool = False
-    
+
     SteamGuardCode = False
     if SteamGuardBool or SteamAuth:
         SteamGuardCode = input("What is your Steam Guard code?: ")
         if SteamGuardCode == "":
-            Bool = input("Code is empty, are you sure? (Y/N):" )
-            if "N" in Bool or "No" in Bool or "n" in Bool or "no" in Bool or "false" in Bool or "False" in Bool:
+            Bool = input("Code is empty, are you sure? (Y/N):")
+            if (
+                "N" in Bool
+                or "No" in Bool
+                or "n" in Bool
+                or "no" in Bool
+                or "false" in Bool
+                or "False" in Bool
+            ):
                 Linux(Path=Path, Username=Username, Password=Password)
-    
+
     url = "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/DepotsList.txt"
     with urllib.request.urlopen(url) as dl_file:
-        with open(f"{Path}/SteamFiles/DepotsList.txt", "wb") as out_file:
+        with open(f"{Path}/SteamFiles/DepotsList.txt", "w") as out_file:
             out_file.write(dl_file.read())
-    
+
     if SteamGuardCode != False:
         P = subprocess.run(
-            ["./steamcmd.sh", "+login", f'{Username}', f'{Password}', f'{SteamGuardCode}', "+runscript", f"{Path}/SteamFiles/DepotsList.txt", "+quit"],
+            [
+                "./steamcmd.sh",
+                "+login",
+                f"{Username}",
+                f"{Password}",
+                f"{SteamGuardCode}",
+                "+runscript",
+                f"{Path}/SteamFiles/DepotsList.txt",
+                "+quit",
+            ],
             cwd=f"{Path}/SteamFiles/",
         )
     else:
         P = subprocess.run(
-            ["./steamcmd.sh", "+login", f'{Username}', f'{Password}', "+runscript", f"{Path}/SteamFiles/DepotsList.txt", "+quit"],
+            [
+                "./steamcmd.sh",
+                "+login",
+                f"{Username}",
+                f"{Password}",
+                "+runscript",
+                f"{Path}/SteamFiles/DepotsList.txt",
+                "+quit",
+            ],
             cwd=f"{Path}/SteamFiles/",
         )
-    
+
     print("####################################")
     print("            MOVING FILES            ")
     print("####################################")
-    
+
     if p.returncode == 0:
-        for i in os.listdir(
-            f"{Path}/SteamFiles/steamapps/content/app_377160"
-        ):
+        for i in os.listdir(f"{Path}/SteamFiles/steamapps/content/app_377160"):
             Util.MoveFiles(
                 f"{Path}/SteamFiles/steamapps/content/app_377160/{i}",
                 Path,
             )
-    
+
     print("####################################")
     print("   Removing creation club content   ")
     print("####################################")
@@ -1303,7 +1358,6 @@ def Linux(Path:str="",Username:str="",Password:str="",SteamAuth:bool=False):
     from webbrowser import open
 
     open("https://fallout4london.com/release/")
-
 
 
 def directory(raw_path):
@@ -1332,7 +1386,7 @@ if __name__ == "__main__":
         "--linux",
         "--Linux",
         help="Use commandline mode (For linux mostly).",
-        action='store_true'
+        action="store_true",
     )
     args = parser.parse_args()
 
