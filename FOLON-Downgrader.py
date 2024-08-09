@@ -1182,6 +1182,117 @@ def main(steampath=None):
 
     sys.exit(app.exec())
 
+def Linux(Path:str="",Username:str="",Password:str="",SteamAuth:bool=False):
+    if Path == "":
+        Path = input("What is the path to Fallout4?: ")
+        if not "Fallout4.exe" in os.listdir(Path):
+            print("Fallout4.exe not in folder")
+            Linux()
+    
+    if not os.path.isdir(f"{Path}/SteamFiles"):
+        print("Downloading steam...")
+        os.mkdir(f"{Path}/SteamFiles")
+
+        url = (
+            "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
+        )
+
+        with urllib.request.urlopen(url) as dl_file:
+            with open(
+                f"{Path}/SteamFiles/steamcmd_linux.tar.gz", "wb"
+            ) as out_file:
+                out_file.write(dl_file.read())
+
+        with tarfile.open(
+            f"{Path}/SteamFiles/steamcmd_linux.tar.gz", "r"
+        ) as tar:
+            tar.extractall(f"{Path}/SteamFiles/")
+        os.remove(f"{Path}/SteamFiles/steamcmd_linux.tar.gz")
+        print("Downloaded Steam!")
+    
+    if Username == "":
+        print("If \" or \\ is in either your username or password preface it with another \\")
+        Username = input("What is your Steam Username?: ")
+    if Password == "":
+        Password = input("What is your Steam Password?: ")
+
+    SteamGuardBool = False
+    
+    if not SteamAuth:
+        SteamGuardPrompt1 = input("Do you have steam guard on mobile? (Y/N): ")
+        if "Y" in SteamGuardPrompt1 or "Yes" in SteamGuardPrompt1 or "y" in SteamGuardPrompt1 or "yes" in SteamGuardPrompt1 or "true" in SteamGuardPrompt1 or "True" in SteamGuardPrompt1:
+            SteamGuardBool = True
+        elif "N" in SteamGuardPrompt1 or "No" in SteamGuardPrompt1 or "n" in SteamGuardPrompt1 or "no" in SteamGuardPrompt1 or "false" in SteamGuardPrompt1 or "False" in SteamGuardPrompt1:
+            SteamGuardBool = False
+        
+        SteamGuardPrompt2 = input("Do you have steam guard on email? (Y/N): ")
+        if "Y" in SteamGuardPrompt2 or "Yes" in SteamGuardPrompt2 or "y" in SteamGuardPrompt2 or "yes" in SteamGuardPrompt2 or "true" in SteamGuardPrompt2 or "True" in SteamGuardPrompt2:
+            subprocess.run(
+                ["./steamcmd.sh", "+login", f'{Username}', f'{Password}', "+quit"],
+                cwd=f"{Path}/SteamFiles/",
+            )
+            Linux(Path=Path, Username=Username, Password=Password,SteamAuth=True)
+        elif "N" in SteamGuardPrompt2 or "No" in SteamGuardPrompt2 or "n" in SteamGuardPrompt2 or "no" in SteamGuardPrompt2 or "false" in SteamGuardPrompt2 or "False" in SteamGuardPrompt2:
+            SteamGuardBool = False
+    
+    SteamGuardCode = False
+    if SteamGuardBool or SteamAuth:
+        SteamGuardCode = input("What is your Steam Guard code?: ")
+    
+    url = "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/DepotsList.txt"
+    with urllib.request.urlopen(url) as dl_file:
+        with open(f"{Path}/SteamFiles/DepotsList.txt", "wb") as out_file:
+            out_file.write(dl_file.read())
+    
+    if SteamGuardCode != False:
+        P = subprocess.run(
+            ["./steamcmd.sh", "+login", f'{Username}', f'{Password}', f'{SteamGuardCode}', "+runscript", f"{Path}/SteamFiles/DepotsList.txt", "+quit"],
+            cwd=f"{Path}/SteamFiles/",
+        )
+    else:
+        P = subprocess.run(
+            ["./steamcmd.sh", "+login", f'{Username}', f'{Password}', "+runscript", f"{Path}/SteamFiles/DepotsList.txt", "+quit"],
+            cwd=f"{Path}/SteamFiles/",
+        )
+    
+    print("####################################")
+    print("            MOVING FILES            ")
+    print("####################################")
+    
+    if p.returncode == 0:
+        for i in os.listdir(
+            f"{Path}/SteamFiles/steamapps/content/app_377160"
+        ):
+            Util.MoveFiles(
+                f"{Path}/SteamFiles/steamapps/content/app_377160/{i}",
+                Path,
+            )
+    
+    print("####################################")
+    print("   Removing creation club content   ")
+    print("####################################")
+
+    for i in os.listdir(self.SteamPath + "/Data"):
+        if i[:2] == "cc":
+            os.remove(self.SteamPath + "/Data/" + i)
+
+    print("####################################")
+    print("      Removing Texture Pack DLC     ")
+    print("####################################")
+
+    for i in os.listdir(self.SteamPath + "/Data"):
+        if i[:22] == "DLCUltraHighResolution":
+            os.remove(self.SteamPath + "/Data/" + i)
+
+    print("####################################")
+    print("                Done                ")
+    print("####################################")
+
+    from webbrowser import open
+
+    open("https://fallout4london.com/release/")
+
+
 
 def directory(raw_path):
     if not os.path.isdir(raw_path):
@@ -1204,16 +1315,17 @@ if __name__ == "__main__":
         help="Path to steam(The directory containing a Fallout4.exe file)",
     )
     parser.add_argument(
-        "-c",
-        "--clean",
-        required=False,
-        metavar="",
-        help="Clean directory, takes over everything else.",
+        "-l",
+        "-L",
+        "--linux",
+        "--Linux",
+        help="Use commandline mode (For linux mostly).",
+        action='store_true'
     )
     args = parser.parse_args()
 
-    if args.clean:
-        Util.CleanUp(args.clean)
+    if args.linux:
+        Linux()
     elif args.path:
         Settings = Util.Read_Settings()
         Settings["Steps"] = 3
