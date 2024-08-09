@@ -1,4 +1,5 @@
 import sys
+from getpass import getpass
 import Utility as Util
 
 if Util.IsBundled():
@@ -1232,41 +1233,32 @@ def Linux(
             Linux(Path=Path, SteamInstalled=True)
 
     if Password == "":
-        Password = input("What is your Steam Password?: ")
+        Password = getpass("What is your Steam Password?: ")
         if Password == "":
             Linux(Path=Path, Username=Username, SteamInstalled=True)
 
     SteamGuardBool = False
 
     if not SteamAuth:
-        SteamGuardPrompt1 = input("Do you have steam guard on mobile? (Y/N): ")
+        SteamGuardPrompt1 = input("Do you have steam guard on mobile? (Y/N): ").lower()
         if (
-            "Y" in SteamGuardPrompt1
-            or "Yes" in SteamGuardPrompt1
-            or "y" in SteamGuardPrompt1
+            "y" in SteamGuardPrompt1
             or "yes" in SteamGuardPrompt1
             or "true" in SteamGuardPrompt1
-            or "True" in SteamGuardPrompt1
         ):
             SteamGuardBool = True
         elif (
-            "N" in SteamGuardPrompt1
-            or "No" in SteamGuardPrompt1
-            or "n" in SteamGuardPrompt1
+            "n" in SteamGuardPrompt1
             or "no" in SteamGuardPrompt1
             or "false" in SteamGuardPrompt1
-            or "False" in SteamGuardPrompt1
         ):
             SteamGuardBool = False
 
-        SteamGuardPrompt2 = input("Do you have steam guard on email? (Y/N): ")
+        SteamGuardPrompt2 = input("Do you have steam guard on email? (Y/N): ").lower()
         if (
-            "Y" in SteamGuardPrompt2
-            or "Yes" in SteamGuardPrompt2
-            or "y" in SteamGuardPrompt2
+            "y" in SteamGuardPrompt2
             or "yes" in SteamGuardPrompt2
             or "true" in SteamGuardPrompt2
-            or "True" in SteamGuardPrompt2
         ):
             subprocess.run(
                 ["./steamcmd.sh", "+login", f"{Username}", f"{Password}", "+quit"],
@@ -1280,12 +1272,9 @@ def Linux(
                 SteamInstalled=True,
             )
         elif (
-            "N" in SteamGuardPrompt2
-            or "No" in SteamGuardPrompt2
-            or "n" in SteamGuardPrompt2
+            "n" in SteamGuardPrompt2
             or "no" in SteamGuardPrompt2
             or "false" in SteamGuardPrompt2
-            or "False" in SteamGuardPrompt2
         ):
             SteamGuardBool = False
 
@@ -1296,14 +1285,11 @@ def Linux(
             print(
                 "(If you didn't get an email after about 5 minutes you should say Y, sometimes you don't need a code)"
             )
-            Bool = input("Code is empty, are you sure? (Y/N):")
+            Bool = input("Code is empty, are you sure? (Y/N):").lower()
             if (
-                "N" in Bool
-                or "No" in Bool
-                or "n" in Bool
+                "n" in Bool
                 or "no" in Bool
                 or "false" in Bool
-                or "False" in Bool
             ):
                 Linux(
                     Path=Path, Username=Username, Password=Password, SteamInstalled=True
