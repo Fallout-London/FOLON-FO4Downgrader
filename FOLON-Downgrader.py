@@ -1,23 +1,23 @@
 import sys
 from getpass import getpass
 import Utility as Util
-
-if Util.IsBundled():
-    sys.excepthook = Util.oops
-
 import shutil
 import os
 import stat
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
-from QLines import *
 import argparse
-from wakepy import keep
 import subprocess
 import urllib.request, zipfile, io, tarfile
 
-from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
+if Util.IsBundled() and Util.IsWindows():
+    sys.excepthook = Util.oops
+
+    from wakepy import keep
+    from PyQt5.QtWidgets import *
+    from PyQt5.QtCore import *
+    from PyQt5.QtGui import QIcon, QPixmap, QFont, QFontDatabase
+    from QLines import *
+
+    from LoadScreenFuncs import LoadingThread, LoadingTranslucentScreen
 
 
 class Communicate(QObject):
@@ -36,13 +36,6 @@ class ScreenThread(LoadingThread):
 
     def run(self):
         self._Function()
-
-
-def DownloadDepotList():
-    url = "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/DepotsList.txt"
-    with urllib.request.urlopen(url) as dl_file:
-        with open("FOLON-Downgrader-Files/DepotsList.txt", "wb") as out_file:
-            out_file.write(dl_file.read())
 
 
 def SetupFont():
@@ -302,42 +295,18 @@ class MainWindow(QMainWindow):
         if not os.path.isdir(f"{self.SteamPath}/SteamFiles"):
             os.mkdir(f"{self.SteamPath}/SteamFiles")
 
-        if Util.IsWindows():
-            url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip"
-        else:
-            url = (
-                "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
-            )
+        url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip"
 
-        if Util.IsWindows():
-            with urllib.request.urlopen(url) as dl_file:
-                with open(f"{self.SteamPath}/SteamFiles/steam.zip", "wb") as out_file:
-                    out_file.write(dl_file.read())
+        with urllib.request.urlopen(url) as dl_file:
+            with open(f"{self.SteamPath}/SteamFiles/steam.zip", "wb") as out_file:
+                out_file.write(dl_file.read())
 
-            with zipfile.ZipFile(
-                f"{self.SteamPath}/SteamFiles/steam.zip", "r"
-            ) as zip_ref:
-                zip_ref.extractall(f"{self.SteamPath}/SteamFiles/")
-            Steam = subprocess.run(
-                [f"{self.SteamPath}/SteamFiles/steamcmd.exe", "+quit"],
-            )
-            os.remove(f"{self.SteamPath}/SteamFiles/steam.zip")
-        else:
-            with urllib.request.urlopen(url) as dl_file:
-                with open(
-                    f"{self.SteamPath}/SteamFiles/steamcmd_linux.tar.gz", "wb"
-                ) as out_file:
-                    out_file.write(dl_file.read())
-
-            with tarfile.open(
-                f"{self.SteamPath}/SteamFiles/steamcmd_linux.tar.gz", "r"
-            ) as tar:
-                tar.extractall(f"{self.SteamPath}/SteamFiles/")
-            Steam = subprocess.run(
-                ["./steamcmd.sh", "+quit"],
-                cwd=f"{self.SteamPath}/SteamFiles/",
-            )
-            os.remove(f"{self.SteamPath}/SteamFiles/steamcmd_linux.tar.gz")
+        with zipfile.ZipFile(f"{self.SteamPath}/SteamFiles/steam.zip", "r") as zip_ref:
+            zip_ref.extractall(f"{self.SteamPath}/SteamFiles/")
+        Steam = subprocess.run(
+            [f"{self.SteamPath}/SteamFiles/steamcmd.exe", "+quit"],
+        )
+        os.remove(f"{self.SteamPath}/SteamFiles/steam.zip")
 
     def WrongPathDialog2(self, path):  # GUI Backend
         if Util.IsWritable(path):
@@ -549,9 +518,6 @@ class MainWindow(QMainWindow):
             2,
         )
 
-        GuardLabel = QLabel("<p>Steam guard code:</p>")
-        GuardLabel.setObjectName("Guard2Label")
-
         self.GuardEntry = QLineEdit()
         self.GuardEntry.setObjectName("TextBox")
         self.GuardEntry.setPlaceholderText("Steam guard code")
@@ -569,7 +535,6 @@ class MainWindow(QMainWindow):
         GuardBox = QVBoxLayout()
         GuardBox.addWidget(GuardButton)
 
-        # SteamGDlgLayout.addWidget(GuardLabel, 3, 0)
         SteamGDlgLayout.addItem(LineBox, 3, 0, 1, 2)
         SteamGDlgLayout.addItem(GuardBox, 4, 0, 1, 2)
         self.SteamGDlg.setWindowTitle("Steam Guard Dialog")
@@ -906,12 +871,15 @@ class MainWindow(QMainWindow):
     def CloseDepotDialog(self):
         self.DepotDialog.close()
 
+    def DownloadDepotList(self):
+        url = "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/DepotsList.txt"
+        with urllib.request.urlopen(url) as dl_file:
+            with open(f"{self.SteamPath}/SteamFiles/DepotsList.txt", "wb") as out_file:
+                out_file.write(dl_file.read())
+
     def InstallInit(self):
         Settings = Util.Read_Settings()
-        print(
-            "Internal download failure, this is not a problem so don't worry: "
-            + str(self.DownloadFailed)
-        )
+        print("This is internal logic, ignore: " + str(self.DownloadFailed))
         if self.DownloadFailed:
             result = Settings["LoginResult"]
             print(result)
@@ -962,40 +930,11 @@ class MainWindow(QMainWindow):
         except:
             pass
 
-        if Util.IsWindows():
-            self.DepotDownloader = f"{self.SteamPath}/SteamFiles/steamcmd.exe"
-        else:
-            if os.path.isfile(f"{self.SteamPath}/SteamFiles/steamcmd.sh"):
-                st = os.stat(f"{self.SteamPath}/SteamFiles/steamcmd.sh")
-                os.chmod(
-                    f"{self.SteamPath}/SteamFiles/steamcmd.sh",
-                    st.st_mode | stat.S_IEXEC,
-                )
-                st = os.stat(f"{self.SteamPath}/SteamFiles/linux32/steamcmd")
-                os.chmod(
-                    f"{self.SteamPath}/SteamFiles/linux32/steamcmd",
-                    st.st_mode | stat.S_IEXEC,
-                )
-                LibArray = [
-                    "libdl.so.2",
-                    "librt.so.1",
-                    "libm.so.6",
-                    "libpthread.so.0",
-                    "libc.so.6",
-                    "/lib/ld-linux.so.2",
-                ]
+        self.DownloadDepotList()
 
-                result = subprocess.run(
-                    ["ldconfig", "-p"], capture_output=True, text=True
-                )
+        self.DepotDownloader = f"{self.SteamPath}/SteamFiles/steamcmd.exe"
 
-                for i in LibArray:
-                    if i in result.stdout:
-                        print(i, i in result.stdout)
-                    else:
-                        self.ErrorBox(f"Missing {i}, please just google it.")
-
-        FilePath = "FOLON-Downgrader-Files/DepotsList.txt"
+        FilePath = f"{self.SteamPath}/SteamFiles/DepotsList.txt"
         with open(FilePath, "r") as file:
             lines = file.readlines()
 
@@ -1009,69 +948,49 @@ class MainWindow(QMainWindow):
                     f'login "{self.Username}" "{self.Password}" "{self.SteamGuardCode}"\n'
                 )
             file.writelines(lines)
-        # with keep.presenting():
-        try:
-            if Util.IsWindows():
-                with subprocess.Popen(
-                    [
-                        self.DepotDownloader,
-                        "+runscript",
-                        "../DepotsList.txt",
-                        "+validate",
-                        "+quit",
-                    ],
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                ) as p:
-                    stdout, stderr = p.communicate()
+        with keep.presenting():
+            p = subprocess.Popen(
+                [
+                    self.DepotDownloader,
+                    "+runscript",
+                    "./DepotsList.txt",
+                    "+quit",
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            output = p.communicate()[0].decode("utf-8")
+            print(output)
+            if (
+                "set_steam_guard_code" in output
+                or "Steam Guard Mobile Authenticator app" in output
+                or "two-factor" in output
+            ):
+                Settings["LoginResult"] = "Guard"
+                Util.Write_Settings(Settings)
+                self.DownloadFailed = True
+            elif "(Rate Limit Exceeded)" in output:
+                Settings["LoginResult"] = "Rate"
+                Util.Write_Settings(Settings)
+                self.DownloadFailed = True
+            elif "(Invalid Login Auth Code)" in output:
+                Settings["LoginResult"] = "Guard"
+                Util.Write_Settings(Settings)
+                self.DownloadFailed = True
+            elif "(Invalid Password)" in output:
+                Settings["LoginResult"] = "PasswordFail"
+                Util.Write_Settings(Settings)
+                self.DownloadFailed = True
             else:
-                with subprocess.Popen(
-                    [
-                        "./steamcmd.sh",
-                        "+runscript",
-                        os.path.abspath("FOLON-Downgrader-Files/DepotsList.txt"),
-                        "+quit",
-                    ],
-                    cwd=f"{self.SteamPath}/SteamFiles/",
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                ) as p:
-                    stdout, stderr = p.communicate()
-        except subprocess.SubprocessError as e:
-            print(f"An error occurred: {e}")
+                self.Downloaded += 1
 
-        output = p.communicate()[0].decode("utf-8")
-        print(output)
-        if (
-            "set_steam_guard_code" in output
-            or "Steam Guard Mobile Authenticator app" in output
-            or "two-factor" in output
-        ):
-            Settings["LoginResult"] = "Guard"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        elif "(Rate Limit Exceeded)" in output:
-            Settings["LoginResult"] = "Rate"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        elif "(Invalid Login Auth Code)" in output:
-            Settings["LoginResult"] = "Guard"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        elif "(Invalid Password)" in output:
-            Settings["LoginResult"] = "PasswordFail"
-            Util.Write_Settings(Settings)
-            self.DownloadFailed = True
-        else:
-            self.Downloaded += 1
+            with open(FilePath, "r") as file:
+                data = file.read().splitlines(True)
 
-        with open(FilePath, "r") as file:
-            data = file.read().splitlines(True)
-
-        with open(FilePath, "w") as file:
-            file.writelines(data[3:])
+            with open(FilePath, "w") as file:
+                file.writelines(data[3:])
 
     def MoveFiles(self):
         for i in os.listdir(
@@ -1164,7 +1083,6 @@ def main(steampath=None):
     shutil.copy(
         Util.resource_path("img/FOLONBackground.png"), "FOLON-Downgrader-Files/"
     )
-    DownloadDepotList()
 
     app = QApplication(sys.argv)
     CSSFile = Util.resource_path("FOLON.css")
@@ -1214,6 +1132,34 @@ def Linux(
     os.mkdir(f"{Path}/SteamFiles")
 
     url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
+
+    if os.path.isfile(f"{Path}/SteamFiles/steamcmd.sh"):
+        st = os.stat(f"{Path}/SteamFiles/steamcmd.sh")
+        os.chmod(
+            f"{Path}/SteamFiles/steamcmd.sh",
+            st.st_mode | stat.S_IEXEC,
+        )
+        st = os.stat(f"{Path}/SteamFiles/linux32/steamcmd")
+        os.chmod(
+            f"{Path}/SteamFiles/linux32/steamcmd",
+            st.st_mode | stat.S_IEXEC,
+        )
+        LibArray = [
+            "libdl.so.2",
+            "librt.so.1",
+            "libm.so.6",
+            "libpthread.so.0",
+            "libc.so.6",
+            "/lib/ld-linux.so.2",
+        ]
+
+        result = subprocess.run(["ldconfig", "-p"], capture_output=True, text=True)
+
+        for i in LibArray:
+            if i in result.stdout:
+                print(i, i in result.stdout)
+            else:
+                raise Exception(f"Missing {i}, please just google it.")
 
     with urllib.request.urlopen(url) as dl_file:
         with open(f"{Path}/SteamFiles/steamcmd_linux.tar.gz", "wb") as out_file:
