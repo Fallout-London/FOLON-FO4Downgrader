@@ -1187,7 +1187,11 @@ def main(steampath=None):
 
 
 def Linux(
-    Path: str = "", Username: str = "", Password: str = "", SteamAuth: bool = False, SteamInstalled: bool = False
+    Path: str = "",
+    Username: str = "",
+    Password: str = "",
+    SteamAuth: bool = False,
+    SteamInstalled: bool = False,
 ):
     global open
     if Path == "":
@@ -1201,7 +1205,7 @@ def Linux(
         elif not "Fallout4.exe" in os.listdir(Path):
             print("Fallout4.exe not in folder")
             Linux()
-    
+
     if os.path.isdir(f"{Path}/SteamFiles"):
         shutil.rmtree(f"{Path}/SteamFiles")
 
@@ -1268,7 +1272,13 @@ def Linux(
                 ["./steamcmd.sh", "+login", f"{Username}", f"{Password}", "+quit"],
                 cwd=f"{Path}/SteamFiles/",
             )
-            Linux(Path=Path, Username=Username, Password=Password, SteamAuth=True, SteamInstalled=True)
+            Linux(
+                Path=Path,
+                Username=Username,
+                Password=Password,
+                SteamAuth=True,
+                SteamInstalled=True,
+            )
         elif (
             "N" in SteamGuardPrompt2
             or "No" in SteamGuardPrompt2
@@ -1283,7 +1293,9 @@ def Linux(
     if SteamGuardBool or SteamAuth:
         SteamGuardCode = input("What is your Steam Guard code?: ")
         if SteamGuardCode == "":
-            print("(If you didn't get an email after about 5 minutes you should say Y, sometimes you don't need a code)")
+            print(
+                "(If you didn't get an email after about 5 minutes you should say Y, sometimes you don't need a code)"
+            )
             Bool = input("Code is empty, are you sure? (Y/N):")
             if (
                 "N" in Bool
@@ -1293,7 +1305,9 @@ def Linux(
                 or "false" in Bool
                 or "False" in Bool
             ):
-                Linux(Path=Path, Username=Username, Password=Password, SteamInstalled=True)
+                Linux(
+                    Path=Path, Username=Username, Password=Password, SteamInstalled=True
+                )
 
     url = "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/DepotsList.txt"
     with urllib.request.urlopen(url) as dl_file:
@@ -1327,7 +1341,6 @@ def Linux(
             ],
             cwd=f"{Path}/SteamFiles/",
         )
-
 
     print("####################################")
     print("            MOVING FILES            ")
