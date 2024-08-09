@@ -1187,8 +1187,9 @@ def main(steampath=None):
 
 
 def Linux(
-    Path: str = "", Username: str = "", Password: str = "", SteamAuth: bool = False
+    Path: str = "", Username: str = "", Password: str = "", SteamAuth: bool = False, SteamInstalled: bool = False
 ):
+    global open
     if Path == "":
         Path = input("What is the path to Fallout4?: ")
         if not os.path.isdir(Path):
@@ -1200,21 +1201,23 @@ def Linux(
         elif not "Fallout4.exe" in os.listdir(Path):
             print("Fallout4.exe not in folder")
             Linux()
+    
+    if os.path.isdir(f"{Path}/SteamFiles"):
+        shutil.rmtree(f"{Path}/SteamFiles")
 
-    if not os.path.isdir(f"{Path}/SteamFiles"):
-        print("Downloading steam...")
-        os.mkdir(f"{Path}/SteamFiles")
+    print("Downloading steam...")
+    os.mkdir(f"{Path}/SteamFiles")
 
-        url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
+    url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
 
-        with urllib.request.urlopen(url) as dl_file:
-            with open(f"{Path}/SteamFiles/steamcmd_linux.tar.gz", "wb") as out_file:
-                out_file.write(dl_file.read())
+    with urllib.request.urlopen(url) as dl_file:
+        with open(f"{Path}/SteamFiles/steamcmd_linux.tar.gz", "wb") as out_file:
+            out_file.write(dl_file.read())
 
-        with tarfile.open(f"{Path}/SteamFiles/steamcmd_linux.tar.gz", "r") as tar:
-            tar.extractall(f"{Path}/SteamFiles/")
-        os.remove(f"{Path}/SteamFiles/steamcmd_linux.tar.gz")
-        print("Downloaded Steam!")
+    with tarfile.open(f"{Path}/SteamFiles/steamcmd_linux.tar.gz", "r") as tar:
+        tar.extractall(f"{Path}/SteamFiles/")
+    os.remove(f"{Path}/SteamFiles/steamcmd_linux.tar.gz")
+    print("Downloaded Steam!")
 
     if Username == "":
         print(
@@ -1222,12 +1225,12 @@ def Linux(
         )
         Username = input("What is your Steam Username?: ")
         if Username == "":
-            Linux(Path=Path)
+            Linux(Path=Path, SteamInstalled=True)
 
     if Password == "":
         Password = input("What is your Steam Password?: ")
         if Password == "":
-            Linux(Path=Path, Username=Username)
+            Linux(Path=Path, Username=Username, SteamInstalled=True)
 
     SteamGuardBool = False
 
@@ -1265,7 +1268,7 @@ def Linux(
                 ["./steamcmd.sh", "+login", f"{Username}", f"{Password}", "+quit"],
                 cwd=f"{Path}/SteamFiles/",
             )
-            Linux(Path=Path, Username=Username, Password=Password, SteamAuth=True)
+            Linux(Path=Path, Username=Username, Password=Password, SteamAuth=True, SteamInstalled=True)
         elif (
             "N" in SteamGuardPrompt2
             or "No" in SteamGuardPrompt2
@@ -1280,6 +1283,7 @@ def Linux(
     if SteamGuardBool or SteamAuth:
         SteamGuardCode = input("What is your Steam Guard code?: ")
         if SteamGuardCode == "":
+            print("(If you didn't get an email after about 5 minutes you should say Y, sometimes you don't need a code)")
             Bool = input("Code is empty, are you sure? (Y/N):")
             if (
                 "N" in Bool
@@ -1289,11 +1293,11 @@ def Linux(
                 or "false" in Bool
                 or "False" in Bool
             ):
-                Linux(Path=Path, Username=Username, Password=Password)
+                Linux(Path=Path, Username=Username, Password=Password, SteamInstalled=True)
 
     url = "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/DepotsList.txt"
     with urllib.request.urlopen(url) as dl_file:
-        with open(f"{Path}/SteamFiles/DepotsList.txt", "w") as out_file:
+        with open(f"{Path}/SteamFiles/DepotsList.txt", "wb") as out_file:
             out_file.write(dl_file.read())
 
     if SteamGuardCode != False:
@@ -1324,16 +1328,16 @@ def Linux(
             cwd=f"{Path}/SteamFiles/",
         )
 
+
     print("####################################")
     print("            MOVING FILES            ")
     print("####################################")
 
-    if p.returncode == 0:
-        for i in os.listdir(f"{Path}/SteamFiles/steamapps/content/app_377160"):
-            Util.MoveFiles(
-                f"{Path}/SteamFiles/steamapps/content/app_377160/{i}",
-                Path,
-            )
+    for i in os.listdir(f"{Path}/SteamFiles/linux32/steamapps/content/app_377160"):
+        Util.MoveFiles(
+            f"{Path}/SteamFiles/linux32/steamapps/content/app_377160/{i}",
+            Path,
+        )
 
     print("####################################")
     print("   Removing creation club content   ")
@@ -1341,6 +1345,7 @@ def Linux(
 
     for i in os.listdir(Path + "/Data"):
         if i[:2] == "cc":
+            print("Removing" + i)
             os.remove(Path + "/Data/" + i)
 
     print("####################################")
@@ -1349,6 +1354,7 @@ def Linux(
 
     for i in os.listdir(Path + "/Data"):
         if i[:22] == "DLCUltraHighResolution":
+            print("Removing" + i)
             os.remove(Path + "/Data/" + i)
 
     print("####################################")
