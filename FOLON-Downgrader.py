@@ -426,7 +426,7 @@ class MainWindow(QMainWindow):
         self.SteamGuardCheck.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.SteamGuardCheck.setChecked(True)
 
-        CheckLayout.addWidget(QLabel("Using mobile Steam Guard:"))
+        CheckLayout.addWidget(QLabel("<p>Using <b>mobile</b> Steam Guard:</p>"))
         CheckLayout.addWidget(self.SteamGuardCheck)
 
         CheckLayout.addStretch()
@@ -907,7 +907,7 @@ class MainWindow(QMainWindow):
 
     def InstallInit(self):
         Settings = Util.Read_Settings()
-        print("Internal download failure, this is not a problem so don't worry: " + self.DownloadFailed)
+        print("Internal download failure, this is not a problem so don't worry: " + str(self.DownloadFailed))
         if self.DownloadFailed:
             result = Settings["LoginResult"]
             print(result)
