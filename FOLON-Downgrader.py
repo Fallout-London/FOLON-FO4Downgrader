@@ -1272,17 +1272,17 @@ def Linux(Path:str="",Username:str="",Password:str="",SteamAuth:bool=False):
     print("   Removing creation club content   ")
     print("####################################")
 
-    for i in os.listdir(self.SteamPath + "/Data"):
+    for i in os.listdir(Path + "/Data"):
         if i[:2] == "cc":
-            os.remove(self.SteamPath + "/Data/" + i)
+            os.remove(Path + "/Data/" + i)
 
     print("####################################")
     print("      Removing Texture Pack DLC     ")
     print("####################################")
 
-    for i in os.listdir(self.SteamPath + "/Data"):
+    for i in os.listdir(Path + "/Data"):
         if i[:22] == "DLCUltraHighResolution":
-            os.remove(self.SteamPath + "/Data/" + i)
+            os.remove(Path + "/Data/" + i)
 
     print("####################################")
     print("                Done                ")
