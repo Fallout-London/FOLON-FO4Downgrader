@@ -311,9 +311,7 @@ class MainWindow(QMainWindow):
                 out_file.write(dl_file.read())
 
         with zipfile.ZipFile(
-            os.path.join(self.SteamPath, "SteamFiles", "steam.zip", "r").replace(
-                "\\", "/"
-            )
+            os.path.join(self.SteamPath, "SteamFiles", "steam.zip").replace("\\", "/")
         ) as zip_ref:
             zip_ref.extractall(
                 os.path.join(self.SteamPath, "SteamFiles").replace("\\", "/")
@@ -998,7 +996,9 @@ class MainWindow(QMainWindow):
             self.SteamPath, "SteamFiles", "steamcmd.exe"
         ).replace("\\", "/")
 
-        FilePath = os.path.join(self.SteamPath, "SteamFiles", "DepotsList.txt").replace("\\", "/")
+        FilePath = os.path.join(self.SteamPath, "SteamFiles", "DepotsList.txt").replace(
+            "\\", "/"
+        )
         with open(FilePath, "r") as file:
             lines = file.readlines()
 
@@ -1161,7 +1161,9 @@ class MainWindow(QMainWindow):
     def RemoveHD(self):
         for i in os.listdir(os.path.join(self.SteamPath, "Data").replace("\\", "/")):
             if i[:22] == "DLCUltraHighResolution":
-                os.remove(os.path.join(self.SteamPath, "Data", str(i)).replace("\\", "/"))
+                os.remove(
+                    os.path.join(self.SteamPath, "Data", str(i)).replace("\\", "/")
+                )
         self.Downloaded += 1
 
     ##########################################################################################
