@@ -294,25 +294,41 @@ class MainWindow(QMainWindow):
         print("Not valid dir")
 
     def SetupSteam(self):
-        if not os.path.isdir(os.path.join(self.SteamPath, "SteamFiles")):
-            os.mkdir(os.path.join(self.SteamPath, "SteamFiles"))
+        if not os.path.isdir(
+            os.path.join(self.SteamPath, "SteamFiles").replace("\\", "/")
+        ):
+            os.mkdir(os.path.join(self.SteamPath, "SteamFiles").replace("\\", "/"))
 
         url = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip"
 
         with urllib.request.urlopen(url) as dl_file:
             with open(
-                os.path.join(self.SteamPath, "SteamFiles", "steam.zip"), "wb"
+                os.path.join(self.SteamPath, "SteamFiles", "steam.zip").replace(
+                    "\\", "/"
+                ),
+                "wb",
             ) as out_file:
                 out_file.write(dl_file.read())
 
         with zipfile.ZipFile(
-            os.path.join(self.SteamPath, "SteamFiles", "steam.zip", "r")
+            os.path.join(self.SteamPath, "SteamFiles", "steam.zip", "r").replace(
+                "\\", "/"
+            )
         ) as zip_ref:
-            zip_ref.extractall(os.path.join(self.SteamPath, "SteamFiles"))
+            zip_ref.extractall(
+                os.path.join(self.SteamPath, "SteamFiles").replace("\\", "/")
+            )
         Steam = subprocess.run(
-            [os.path.join(self.SteamPath, "SteamFiles", "steamcmd.exe"), "+quit"],
+            [
+                os.path.join(self.SteamPath, "SteamFiles", "steamcmd.exe").replace(
+                    "\\", "/"
+                ),
+                "+quit",
+            ],
         )
-        os.remove(os.path.join(self.SteamPath, "SteamFiles", "steam.zip"))
+        os.remove(
+            os.path.join(self.SteamPath, "SteamFiles", "steam.zip").replace("\\", "/")
+        )
 
     def WrongPathDialog2(self, path):  # GUI Backend
         if Util.IsWritable(path):
@@ -450,7 +466,9 @@ class MainWindow(QMainWindow):
         self.Password = self.PasswordEntry.text()
         self.Username = self.UsernameEntry.text()
 
-        if not os.path.isdir(os.path.join(self.SteamPath, "SteamFiles")):
+        if not os.path.isdir(
+            os.path.join(self.SteamPath, "SteamFiles").replace("\\", "/")
+        ):
             self.Loading(
                 self.SetupSteam,
                 text="Loading Steam backend",
@@ -882,7 +900,10 @@ class MainWindow(QMainWindow):
         url = "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/DepotsList.txt"
         with urllib.request.urlopen(url) as dl_file:
             with open(
-                os.path.join(self.SteamPath, "SteamFiles", "DepotsList.txt"), "wb"
+                os.path.join(self.SteamPath, "SteamFiles", "DepotsList.txt").replace(
+                    "\\", "/"
+                ),
+                "wb",
             ) as out_file:
                 out_file.write(dl_file.read())
 
@@ -925,7 +946,7 @@ class MainWindow(QMainWindow):
                         "steamapps",
                         "content",
                         "app_377160",
-                    ),
+                    ).replace("\\", "/"),
                     ProgressMax=117,
                     PostFunction=self.InstallInit,
                 )
@@ -946,7 +967,7 @@ class MainWindow(QMainWindow):
                         "steamapps",
                         "content",
                         "app_377160",
-                    ),
+                    ).replace("\\", "/"),
                     ProgressMax=117,
                     PostFunction=self.InstallInit,
                 )
@@ -975,9 +996,9 @@ class MainWindow(QMainWindow):
 
         self.DepotDownloader = os.path.join(
             self.SteamPath, "SteamFiles", "steamcmd.exe"
-        )
+        ).replace("\\", "/")
 
-        FilePath = os.path.join(self.SteamPath, "SteamFiles", "DepotsList.txt")
+        FilePath = os.path.join(self.SteamPath, "SteamFiles", "DepotsList.txt").replace("\\", "/")
         with open(FilePath, "r") as file:
             lines = file.readlines()
 
@@ -1039,7 +1060,7 @@ class MainWindow(QMainWindow):
         for i in os.listdir(
             os.path.join(
                 self.SteamPath, "SteamFiles", "steamapps", "content", "app_377160"
-            )
+            ).replace("\\", "/")
         ):
             Util.MoveFiles(
                 os.path.join(
@@ -1049,7 +1070,7 @@ class MainWindow(QMainWindow):
                     "content",
                     "app_377160",
                     str(i),
-                ),
+                ).replace("\\", "/"),
                 self.SteamPath,
             )
         self.Downloaded += 1
@@ -1080,7 +1101,7 @@ class MainWindow(QMainWindow):
         OriginalFiles = Util.list_files_walk(
             os.path.join(
                 self.SteamPath, "SteamFiles", "steamapps", "content", "app_377160"
-            )
+            ).replace("\\", "/")
         )
         ProcessedFiles = []
         for i in OriginalFiles:
@@ -1132,15 +1153,15 @@ class MainWindow(QMainWindow):
             self.Downloaded += 1
 
     def RemoveCC(self):
-        for i in os.listdir(os.path.join(self.SteamPath, "Data")):
+        for i in os.listdir(os.path.join(self.SteamPath, "Data").replace("\\", "/")):
             if i[:2] == "cc":
-                os.remove(os.path.join(self.SteamPath, "Data", i))
+                os.remove(os.path.join(self.SteamPath, "Data", i).replace("\\", "/"))
         self.Downloaded += 1
 
     def RemoveHD(self):
-        for i in os.listdir(os.path.join(self.SteamPath, "Data")):
+        for i in os.listdir(os.path.join(self.SteamPath, "Data").replace("\\", "/")):
             if i[:22] == "DLCUltraHighResolution":
-                os.remove(os.path.join(self.SteamPath, "Data", str(i)))
+                os.remove(os.path.join(self.SteamPath, "Data", str(i)).replace("\\", "/"))
         self.Downloaded += 1
 
     ##########################################################################################
