@@ -304,7 +304,7 @@ class MainWindow(QMainWindow):
                 out_file.write(dl_file.read())
 
         with zipfile.ZipFile(
-            os.path.join(self.SteamPath, "SteamFiles", "steam.zip", "r")
+            os.path.join(self.SteamPath, "SteamFiles", "steam.zip"), "r"
         ) as zip_ref:
             zip_ref.extractall(os.path.join(self.SteamPath, "SteamFiles"))
         Steam = subprocess.run(
