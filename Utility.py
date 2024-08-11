@@ -179,6 +179,17 @@ def oops(type, value, tb):
     sys.exit(1)
 
 
+def list_files_walk(path="."):
+    import os
+
+    FileArray = []
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            FileArray.append(os.path.join(root, file).replace("\\", "/"))
+
+    return FileArray
+
+
 def MoveFiles(srcdir, dstdir):
     from os import path, listdir, mkdir
     from shutil import move, rmtree
