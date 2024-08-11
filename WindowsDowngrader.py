@@ -913,11 +913,11 @@ class MainWindow(QMainWindow):
             for i in self.ValidatedStatuses:
                 if not i[2]:
                     if not i[1] in FailedFiles:
-                        FailedFiles.append(i[1])
+                        FailedFiles.append([i[0], i[1]])
 
             self.ErrorBox(
                 "The following depots failed to download properly:\n"
-                + [f"{i}" for i in FailedFiles][0],
+                + [f"{i[0]}from {i[1]}" for i in FailedFiles][0],
                 Title="Files failed to download",
                 breaking=True,
             )
@@ -992,6 +992,39 @@ class MainWindow(QMainWindow):
 
         self.DownloadDepotList()
 
+        if (
+            len(
+                os.listdir(
+                    os.path.join(
+                        self.SteamPath,
+                        "SteamFiles",
+                        "steamapps",
+                        "content",
+                        "app_377160",
+                    ).replace("\\", "/"),
+                )
+            )
+            != 0
+        ):
+            shutil.remove(
+                os.path.join(
+                    self.SteamPath,
+                    "SteamFiles",
+                    "steamapps",
+                    "content",
+                    "app_377160",
+                ).replace("\\", "/"),
+            )
+            os.mkdir(
+                os.path.join(
+                    self.SteamPath,
+                    "SteamFiles",
+                    "steamapps",
+                    "content",
+                    "app_377160",
+                ).replace("\\", "/"),
+            )
+
         self.DepotDownloader = os.path.join(
             self.SteamPath, "SteamFiles", "steamcmd.exe"
         ).replace("\\", "/")
@@ -1027,6 +1060,7 @@ class MainWindow(QMainWindow):
 
             output = p.communicate()[0].decode("utf-8")
             print(output)
+            Settings = Util.Read_Settings()
             if (
                 "set_steam_guard_code" in output
                 or "Steam Guard Mobile Authenticator app" in output
