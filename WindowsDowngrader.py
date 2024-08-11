@@ -912,7 +912,7 @@ class MainWindow(QMainWindow):
             elif result == "PasswordFail":
                 self.activate_tab_2()
         else:
-            if self.Downloaded == 69:
+            if self.Downloaded == 0:
                 Settings["LoginResult"] = ""
                 Util.Write_Settings(Settings)
                 self.DownloadFailed = False
@@ -929,7 +929,7 @@ class MainWindow(QMainWindow):
                     ProgressMax=117,
                     PostFunction=self.InstallInit,
                 )
-            elif self.Downloaded == 0:
+            elif self.Downloaded == 1:
                 self.Loading(
                     self.ValidateFiles,
                     text=f"Validating files",
