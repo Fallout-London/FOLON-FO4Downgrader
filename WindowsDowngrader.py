@@ -900,6 +900,7 @@ class MainWindow(QMainWindow):
                 "The following depots failed to download properly:\n"
                 + [f"{i}" for i in FailedFiles][0],
                 Title="Files failed to download",
+                breaking=True,
             )
 
         elif self.DownloadFailed:
