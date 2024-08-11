@@ -5,7 +5,7 @@ import os
 import stat
 
 import subprocess
-import urllib.request, zipfile, io, tarfile
+import urllib.request, zipfile, io, tarfile, json, hashlib
 
 if Util.IsBundled() and Util.IsWindows():
     sys.excepthook = Util.oops
@@ -183,7 +183,7 @@ class MainWindow(QMainWindow):
             self.__thread.finished.connect(PostFunction)
         self.__thread.start()
 
-    def ErrorBox(self, Message, Title="Title", breaking=False):
+    def ErrorBox(self, Message, Title="Error", breaking=False):
         try:
             self.SteamGDlg.close()
         except:
@@ -192,7 +192,7 @@ class MainWindow(QMainWindow):
             self.GuideDialog.close()
         except:
             pass
-        RateDialog = QDialog()
+        self.RateDialog = QDialog()
         RateDialogLayout = QFormLayout()
         RateDialogLayout.addRow(QLabel(f"<h1>{Title}</h1>"))
         RateDialogLayout.addRow(QLabel(f"<p>{Message}</p>"))
@@ -200,10 +200,12 @@ class MainWindow(QMainWindow):
         RateDialogButton = QPushButton(text="Close")
         if breaking:
             RateDialogButton.pressed.connect(self.CloseRateDialog)
+        else:
+            RateDialogButton.pressed.connect(lambda: self.RateDialog.close())
         RateDialogLayout.addRow(RateDialogButton)
 
-        RateDialog.setLayout(RateDialogLayout)
-        RateDialog.exec()
+        self.RateDialog.setLayout(RateDialogLayout)
+        self.RateDialog.exec()
 
     ##########################################################################################
     # STEAM PATH                                                                             #
@@ -824,6 +826,7 @@ class MainWindow(QMainWindow):
     def tab3UI(self):  # GUI
         self.Downloaded = 0
         self.DownloadFailed = False
+        self.ValidationFail = False
         layout = QFormLayout()
         layout.addRow(
             QLabel(
@@ -886,9 +889,21 @@ class MainWindow(QMainWindow):
     def InstallInit(self):
         Settings = Util.Read_Settings()
         print("This is internal logic, ignore: " + str(self.DownloadFailed))
-        if self.DownloadFailed:
+        if self.ValidationFail:
+            FailedFiles = []
+            for i in self.ValidatedStatuses:
+                if not i[2]:
+                    if not i[1] in FailedFiles:
+                        FailedFiles.append(i[1])
+
+            self.ErrorBox(
+                "The following depots failed to download properly:\n"
+                + [f"{i}" for i in FailedFiles][0],
+                Title="Files failed to download",
+            )
+
+        elif self.DownloadFailed:
             result = Settings["LoginResult"]
-            print(result)
             if result == "Guard":
                 self.SteamDialog()
             elif result == "Rate":
@@ -896,7 +911,7 @@ class MainWindow(QMainWindow):
             elif result == "PasswordFail":
                 self.activate_tab_2()
         else:
-            if self.Downloaded == 0:
+            if self.Downloaded == 69:
                 Settings["LoginResult"] = ""
                 Util.Write_Settings(Settings)
                 self.DownloadFailed = False
@@ -913,7 +928,14 @@ class MainWindow(QMainWindow):
                     ProgressMax=117,
                     PostFunction=self.InstallInit,
                 )
-            elif self.Downloaded == 1:
+            elif self.Downloaded == 0:
+                self.Loading(
+                    self.ValidateFiles,
+                    text=f"Validating files",
+                    PostFunction=self.InstallInit,
+                )
+
+            elif self.Downloaded == 2:
                 self.Loading(
                     self.MoveFiles,
                     text=f"Moving files to {self.SteamPath}",
@@ -927,19 +949,19 @@ class MainWindow(QMainWindow):
                     ProgressMax=117,
                     PostFunction=self.InstallInit,
                 )
-            elif self.Downloaded == 2:
+            elif self.Downloaded == 3:
                 self.Loading(
                     self.RemoveCC,
                     text=f"Removing Creation Club content",
                     PostFunction=self.InstallInit,
                 )
-            elif self.Downloaded == 3:
+            elif self.Downloaded == 4:
                 self.Loading(
                     self.RemoveHD,
                     text=f"Removing Texture Pack DLC",
                     PostFunction=self.InstallInit,
                 )
-            elif self.Downloaded == 4:
+            elif self.Downloaded == 5:
                 self.activate_tab_4()
 
     def Install(self):
@@ -1030,6 +1052,83 @@ class MainWindow(QMainWindow):
                 self.SteamPath,
             )
         self.Downloaded += 1
+
+    def ValidateFiles(self):
+        with urllib.request.urlopen(
+            "https://github.com/Fallout-London/FOLON-FO4Downgrader/releases/download/BackendFiles/Checksums.json"
+        ) as url:
+            self.Hashes = json.load(url)
+
+        DepotNames = [
+            "377162",
+            "435870",
+            "435871",
+            "435880",
+            "435882",
+            "480630",
+            "480631",
+            "393885",
+            "393895",
+            "435881",
+            "377164",
+            "490650",
+            "377161",
+            "377163",
+        ]
+
+        OriginalFiles = Util.list_files_walk(
+            os.path.join(
+                self.SteamPath, "SteamFiles", "steamapps", "content", "app_377160"
+            )
+        )
+        ProcessedFiles = []
+        for i in OriginalFiles:
+            FileIndex = OriginalFiles.index(i)
+
+            i = i.replace(
+                os.path.join(
+                    self.SteamPath,
+                    "SteamFiles",
+                    "steamapps",
+                    "content",
+                    "app_377160",
+                ).replace("\\", "/"),
+                "",
+            )
+            for b in DepotNames:
+                i = i.replace(f"/depot_{b}/", "")
+
+            i = "Fallout4/" + i
+            ProcessedFiles.append([i, FileIndex])
+
+        self.ValidatedStatuses = []
+
+        for a in self.Hashes["FilePairs"]:
+            OldA = a
+            for b in ProcessedFiles:
+                if b[0] == a[0]:
+                    with open(OriginalFiles[b[1]], "rb") as f:
+                        md5 = hashlib.md5()
+
+                        while True:
+                            chunk = f.read(16 * 1024)
+                            if not chunk:
+                                break
+                            md5.update(chunk)
+
+                        print(f"{b[0]} : {md5.hexdigest() == a[1]}")
+                        if md5.hexdigest() == a[1]:
+                            self.ValidatedStatuses.append(
+                                [OriginalFiles[b[1]], a[2], True]
+                            )
+                        else:
+                            self.ValidatedStatuses.append(
+                                [OriginalFiles[b[1]], a[2], False]
+                            )
+                            self.ValidationFail = True
+
+        if not self.ValidationFail:
+            self.Downloaded += 1
 
     def RemoveCC(self):
         for i in os.listdir(os.path.join(self.SteamPath, "Data")):
