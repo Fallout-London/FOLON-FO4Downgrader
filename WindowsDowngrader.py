@@ -78,7 +78,7 @@ class MainWindow(QMainWindow):
         )
         self.SubmitButton.pressed.connect(self.ContinueAction)
 
-        bottom_layout.addWidget(QLabel("<small>Developed by Cornelius Rosenaa</small>"))
+        bottom_layout.addWidget(QLabel("<small>V1.5.8 by Cornelius Rosenaa</small>"))
         bottom_layout.addStretch()
         bottom_layout.addWidget(self.SubmitButton)
 
