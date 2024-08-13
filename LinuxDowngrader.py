@@ -206,6 +206,6 @@ def Linux(
     print("                Done                ")
     print("####################################")
 
-    from webbrowser import open
+    import webbrowser
 
-    open("https://fallout4london.com/release/")
+    webbrowser.open("https://fallout4london.com/release/")
