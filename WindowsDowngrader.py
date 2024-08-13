@@ -981,6 +981,8 @@ class MainWindow(QMainWindow):
                 stderr=subprocess.PIPE,
             )
 
+            Settings = Util.Read_Settings()
+
             output = p.communicate()[0].decode("utf-8")
             print(output)
             if (
