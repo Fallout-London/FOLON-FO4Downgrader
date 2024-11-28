@@ -13,6 +13,9 @@ git clone https://github.com/Fallout-London/FOLON-FO4Downgrader.git && cd FOLON-
 ## To build
 Read the [build document](./build.md)
 
+## Archival
+Due to the launch of FOLON being over and the main developer being busy with college this repo is being archived, this dosen't mean that the project is abandoned but just that it isn't recieving new feature updates and only possible security patches down the line.
+
 ## Thanks to
 [Cornelius Rosenaa for making this](https://coffandro.github.io/)\
 [Hollowrider of Brighter Applications for helping move backend to SteamCMD](https://github.com/Brighter-Applications)\
