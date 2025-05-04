@@ -19,6 +19,8 @@ def Linux(
     global open
     if Path == "":
         Path = input("What is the path to Fallout4?: ")
+        if Path.endswith('/'):
+            Path = Path[:-1]
         if not os.path.isdir(Path):
             print("Please input a path")
             Linux()
@@ -179,10 +181,14 @@ def Linux(
     print("####################################")
 
     for i in os.listdir(f"{Path}/SteamFiles/linux32/steamapps/content/app_377160"):
-        Util.MoveFiles(
-            f"{Path}/SteamFiles/linux32/steamapps/content/app_377160/{i}",
-            Path,
-        )
+        try:
+            Util.MoveFiles(
+                f"{Path}/SteamFiles/linux32/steamapps/content/app_377160/{i}",
+                Path,
+            )
+        except NotADirectoryError:
+            print ("Caught .patch NotADirectory exception, this is normal. Proceeding forward.")
+            pass
 
     print("####################################")
     print("   Removing creation club content   ")
