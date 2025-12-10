@@ -17,10 +17,10 @@ Read the [build document](./build.md)
 Due to the launch of FOLON being over and the main developer being busy with college this repo is being archived, this dosen't mean that the project is abandoned but just that it isn't recieving new feature updates and only possible security patches down the line.
 
 ## Thanks to
-[Cornelius Rosenaa for making this](https://coffandro.github.io/)\
+[Frida Rosenaa for making this](https://coffandro.github.io/)\
 [Hollowrider of Brighter Applications for helping move backend to SteamCMD](https://github.com/Brighter-Applications)\
 [Michel for testing on windows](https://www.linkedin.com/in/michellichand/)\
-Skedone for helping finish Linux support up
+Skedone for helping finish Linux support up\
 [thomascrha for helping fix all the small bugs](https://github.com/thomascrha) 
 [SteamRE for DepotDownloader](https://github.com/SteamRE/DepotDownloader)\
 [Zerratar for reference FO4-Downgrader](https://www.twitch.tv/zerratar)\
